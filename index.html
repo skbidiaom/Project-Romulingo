@@ -1872,6 +1872,23 @@
       list.innerHTML = classes.length ? classes.map((klass) => `<div class="class-row"><div><strong>${escapeHTML(klass.name)}</strong><br><small>${escapeHTML((klass.students || []).join(", ") || "0")}</small></div><span class="role-badge">${escapeHTML(klass.teacherUsername || "Teacher")}</span></div>`).join("") : `<div class="muted">${tr("classes")}</div>`;
     }
 
+    let rolePanelParent = null;
+    function toggleOwnerFloat() {
+      const panel = $("#rolePanel");
+      if (!panel) return;
+      if (panel.classList.contains("floating")) {
+        panel.classList.remove("floating");
+        if (rolePanelParent) rolePanelParent.appendChild(panel);
+        rolePanelParent = null;
+        renderRolePanel();
+      } else {
+        rolePanelParent = panel.parentElement;
+        document.body.appendChild(panel);
+        panel.classList.add("floating", "show");
+        renderRolePanel();
+      }
+    }
+
     async function setUserRole(username, role) {
       role = String(role || "").toUpperCase();
       if (!ROLES.includes(role)) return;
@@ -2973,6 +2990,12 @@
         if (event.code === "ArrowRight" && game?.type === "breakout") game.paddle.x = Math.min(game.width - game.paddle.w, game.paddle.x + 34);
         if (event.code === "ArrowLeft" && game?.type === "catcher") game.catcher.x = Math.max(0, game.catcher.x - 38);
         if (event.code === "ArrowRight" && game?.type === "catcher") game.catcher.x = Math.min(game.width - game.catcher.w, game.catcher.x + 38);
+        if ((event.key === "5" || event.code === "Digit5" || event.code === "Numpad5") && canUseRole("OWNER")) {
+          const tag = (event.target?.tagName || "").toLowerCase();
+          if (tag === "input" || tag === "textarea" || event.target?.isContentEditable) return;
+          event.preventDefault();
+          toggleOwnerFloat();
+        }
       });
       window.addEventListener("resize", () => {
         resizeCanvas();
