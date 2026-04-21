@@ -1830,9 +1830,10 @@
       const isTeacher = canUseRole("TEACHER");
       const isAdmin = canUseRole("ADMIN");
       const isOwner = canUseRole("OWNER");
+      const role = currentRole();
       panel.classList.toggle("show", isTeacher);
-      $("#teacherTools").hidden = !isTeacher;
-      $("#adminTools").hidden = !isAdmin;
+      $("#teacherTools").hidden = !(role === "TEACHER" || isOwner);
+      $("#adminTools").hidden = !(role === "ADMIN" || isOwner);
       $("#ownerTools").hidden = !isOwner;
       const loadingInput = $("#loadingMsInput");
       if (loadingInput) loadingInput.value = String(state.settings.loadingMs ?? 6700);
@@ -1847,11 +1848,7 @@
       if (!list) return;
       list.innerHTML = users.length ? users.map((user) => {
         const role = String(user.role || "STUDENT").toUpperCase();
-        const actions = canUseRole("OWNER")
-          ? `<button class="tiny-btn" data-role-user="${escapeHTML(user.username)}" data-role="TEACHER" type="button">TEACHER</button><button class="tiny-btn" data-role-user="${escapeHTML(user.username)}" data-role="ADMIN" type="button">ADMIN</button><button class="tiny-btn" data-role-user="${escapeHTML(user.username)}" data-role="OWNER" type="button">OWNER</button>`
-          : canUseRole("ADMIN")
-            ? `<button class="tiny-btn" data-role-user="${escapeHTML(user.username)}" data-role="TEACHER" type="button">TEACHER</button>`
-            : "";
+        const actions = `<button class="tiny-btn" data-role-user="${escapeHTML(user.username)}" data-role="STUDENT" type="button">STUDENT</button><button class="tiny-btn" data-role-user="${escapeHTML(user.username)}" data-role="TEACHER" type="button">TEACHER</button><button class="tiny-btn" data-role-user="${escapeHTML(user.username)}" data-role="ADMIN" type="button">ADMIN</button><button class="tiny-btn" data-role-user="${escapeHTML(user.username)}" data-role="OWNER" type="button">OWNER</button>`;
         return `<div class="user-row"><div><strong>${escapeHTML(user.username)}</strong><br><small>${role} · ${Number(user.coins || 0)} 🪙 ${Number(user.gems || 0)} 💎</small></div><div class="toolbar">${actions}</div></div>`;
       }).join("") : `<div class="muted">${tr("noPlayers")}</div>`;
       $$("[data-role-user]", list).forEach((button) => button.addEventListener("click", () => setUserRole(button.dataset.roleUser, button.dataset.role)));
@@ -1893,9 +1890,6 @@
       role = String(role || "").toUpperCase();
       if (!ROLES.includes(role)) return;
       const users = allRegisteredUsers();
-      const hasOwner = users.some((user) => String(user.role || "").toUpperCase() === "OWNER");
-      const needed = role === "OWNER" ? "OWNER" : "ADMIN";
-      if (hasOwner && !canUseRole(needed)) { toast("Role locked"); return; }
       const user = findRegisteredUser(username);
       if (!user) { toast("No user"); return; }
       if (role !== "STUDENT") {
