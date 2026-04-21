@@ -41,8 +41,12 @@
       --soft-shadow: 0 10px 24px rgba(0, 0, 0, .25);
     }
 
-    * { box-sizing: border-box; }
-    html, body { min-height: 100%; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      min-height: 100%;
+      min-height: 100dvh;
+      overscroll-behavior-y: none;
+    }
 
     body {
       margin: 0;
@@ -54,10 +58,13 @@
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       letter-spacing: 0;
       overflow-x: hidden;
+      -webkit-text-size-adjust: 100%;
+      -webkit-font-smoothing: antialiased;
     }
 
-    button, input, select { font: inherit; letter-spacing: 0; }
-    button { border: 0; cursor: pointer; }
+    button, input, select, textarea { font: inherit; letter-spacing: 0; }
+    input, select, textarea { font-size: 16px; }
+    button { border: 0; cursor: pointer; touch-action: manipulation; }
     button:disabled { cursor: not-allowed; opacity: .48; filter: saturate(.55); }
 
     button, .path-node, .shop-item, .panel, .memory-card, .answer-btn {
@@ -870,6 +877,8 @@
     }
     .top-left:empty { display: none; }
 
+    .mobile-status { display: none; }
+
     .profile-hero {
       display: grid;
       grid-template-columns: auto minmax(0, 1fr);
@@ -1015,13 +1024,15 @@
       body { -webkit-text-size-adjust: 100%; }
       .topbar {
         position: sticky;
-        min-height: 64px;
-        padding: 8px 10px;
-        grid-template-columns: auto minmax(0, 1fr) auto;
+        min-height: 80px;
+        padding: 8px 10px calc(8px + env(safe-area-inset-top, 0px));
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
         gap: 6px;
         backdrop-filter: none;
         background: var(--panel);
       }
+      .top-left { justify-self: start; }
+      .top-actions { justify-self: end; }
       .brand strong { display: none; }
       .shell { padding: 10px 8px 120px; gap: 10px; max-width: 100vw; }
       .view { padding: 12px; }
@@ -1042,12 +1053,54 @@
       .create-class-btn { padding: 0 10px; font-size: 12px; }
       .create-class-btn span { display: none; }
       .top-left { padding-left: 0; }
-      .brand { width: auto; min-width: 140px; height: 52px; justify-self: center; }
-      .logo-img { width: 46px; height: 46px; transform: translate(-50px, calc(-50% + 4px)) scale(2.2); }
-      .logo-text-img { left: 50%; width: min(170px, 44vw); max-height: 48px; transform: translate(-40%, -50%) scale(6.1); }
-      .brand-mark { width: 34px; height: 34px; }
-      .hero-logo { min-height: 86px; margin: 6px 0 10px; }
-      .hero-logo img { width: min(420px, 92vw); max-height: 110px; transform: scale(3.1); }
+      .brand {
+        width: auto;
+        min-width: 160px;
+        max-width: 260px;
+        height: 60px;
+        justify-self: center;
+        overflow: visible;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .logo-img {
+        position: static;
+        width: 58px;
+        height: 58px;
+        transform: none;
+        display: block;
+        flex-shrink: 0;
+      }
+      .logo-text-img {
+        position: static;
+        width: auto;
+        height: 54px;
+        max-width: 170px;
+        transform: scale(2);
+        transform-origin: left center;
+        margin-right: 60px;
+        object-fit: contain;
+      }
+      .brand-mark { position: static; width: 44px; height: 44px; }
+      .hero-logo { display: none; }
+      .mobile-status {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 12px 14px;
+        margin-bottom: 12px;
+        border-radius: var(--radius);
+        background: linear-gradient(135deg, color-mix(in srgb, var(--green), transparent 82%), color-mix(in srgb, var(--blue), transparent 82%));
+        border: 1px solid var(--line);
+      }
+      .mobile-status-user { display: flex; align-items: center; gap: 10px; min-width: 0; }
+      .mobile-status-name { display: grid; gap: 2px; min-width: 0; }
+      .mobile-status-name strong { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 130px; }
+      .mobile-status-name .role-badge { font-size: 10px; min-height: 22px; padding: 0 7px; justify-self: start; }
+      .mobile-status-wallet { display: flex; gap: 6px; flex-shrink: 0; }
+      .mobile-status-wallet .wallet-chip { min-height: 34px; padding: 0 8px; font-size: 12px; }
       .path-step { min-height: 112px; grid-template-columns: minmax(0, 1fr) 86px minmax(0, 1fr); gap: 8px; }
       .path-node { width: 78px; height: 78px; font-size: 26px; }
       .path-label { max-width: min(132px, calc(50vw - 58px)); padding: 8px; }
@@ -1153,6 +1206,19 @@
 
     <main class="main">
       <section class="view active" id="pathView">
+        <section class="mobile-status" id="mobileStatus">
+          <div class="mobile-status-user">
+            <div id="mobileAvatar"></div>
+            <div class="mobile-status-name">
+              <strong id="mobileName">RG-Discipulus</strong>
+              <span class="role-badge" id="mobileRoleBadge">STUDENT</span>
+            </div>
+          </div>
+          <div class="mobile-status-wallet">
+            <div class="wallet-chip"><span>🪙</span><b id="mobileCoinCount">0</b></div>
+            <div class="wallet-chip"><span>💎</span><b id="mobileGemCount">0</b></div>
+          </div>
+        </section>
         <div class="view-head">
           <h1 class="hero-logo"><img src="romulingo_text.png" alt="Romulingo" onload="this.nextElementSibling.style.display='none';" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';"><span>Romulingo</span></h1>
         </div>
@@ -1926,6 +1992,11 @@
       const mastered = Object.values(state.stars).filter((stars) => Number(stars) >= 3).length;
       $("#sideProgress").textContent = `${mastered} / ${lessonNumbers.length}`;
       renderAvatar($("#sideAvatar"), 58);
+      renderAvatar($("#mobileAvatar"), 42);
+      const mName = $("#mobileName"); if (mName) mName.textContent = state.playerName || "RG-Discipulus";
+      const mRole = $("#mobileRoleBadge"); if (mRole) mRole.textContent = currentRole();
+      const mCoin = $("#mobileCoinCount"); if (mCoin) mCoin.textContent = state.coins;
+      const mGem = $("#mobileGemCount"); if (mGem) mGem.textContent = state.gems;
       renderAvatar($("#topProfileAvatar"), 34);
       renderAvatar($("#shopAvatar"), 150);
       renderAvatar($("#profileAvatar"), 170);
@@ -2636,75 +2707,168 @@
     }
 
     function drawFlappy(ctx, w, h) {
-      const laneH = h / 4;
-      ctx.fillStyle = "rgba(32, 196, 111, .15)";
-      for (let lane = 1; lane < 4; lane += 1) ctx.fillRect(0, lane * laneH - 1, w, 2);
-      const pipeW = Math.min(178, Math.max(124, w * .17));
-      for (let lane = 0; lane < 4; lane += 1) {
-        const y = lane * laneH + 9;
-        const gateH = laneH - 18;
-        const x = game.obstacleX;
-        const grad = ctx.createLinearGradient(x, y, x + pipeW, y + gateH);
-        grad.addColorStop(0, "#11a761");
-        grad.addColorStop(1, "#40d989");
-        ctx.fillStyle = grad;
-        roundRect(ctx, x, y, pipeW, gateH, 13);
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
+      skyGrad.addColorStop(0, "#7fd0ff");
+      skyGrad.addColorStop(.65, "#c9ecff");
+      skyGrad.addColorStop(1, "#e9f9ee");
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, w, h);
+
+      const cloudOffset = ((performance.now() / 50) % (w + 200)) - 100;
+      ctx.fillStyle = "rgba(255,255,255,.82)";
+      drawCloud(ctx, (w - cloudOffset) % w, h * .18, 46);
+      drawCloud(ctx, (w - cloudOffset * .6 + 220) % w, h * .32, 32);
+      drawCloud(ctx, (w - cloudOffset * .4 + 420) % w, h * .12, 38);
+
+      ctx.fillStyle = "rgba(17,167,97,.38)";
+      ctx.fillRect(0, h - 28, w, 28);
+      ctx.fillStyle = "rgba(17,167,97,.58)";
+      for (let gx = 0; gx < w; gx += 18) {
+        ctx.beginPath();
+        ctx.moveTo(gx, h - 28);
+        ctx.lineTo(gx + 6, h - 40);
+        ctx.lineTo(gx + 12, h - 28);
+        ctx.closePath();
         ctx.fill();
-        ctx.fillStyle = "rgba(255,255,255,.94)";
-        roundRect(ctx, x + 10, y + 10, pipeW - 20, gateH - 20, 8);
+      }
+
+      const promptText = game.challenge.entry.meaning;
+      const promptFont = Math.max(16, Math.min(26, w / 34));
+      ctx.font = `900 ${promptFont}px Inter, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      const promptMetrics = ctx.measureText(promptText);
+      const boxW = Math.min(w - 40, promptMetrics.width + 40);
+      const boxH = promptFont + 22;
+      ctx.fillStyle = "rgba(23,33,43,.78)";
+      roundRect(ctx, w / 2 - boxW / 2, 12, boxW, boxH, 14);
+      ctx.fill();
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(promptText, w / 2, 12 + boxH / 2);
+
+      const laneH = (h - 28) / 4;
+      const pipeW = Math.min(190, Math.max(138, w * .19));
+      const palette = ["#ef6a4f", "#3b82f6", "#f4b622", "#24c46f"];
+      for (let lane = 0; lane < 4; lane += 1) {
+        const y = lane * laneH + 10;
+        const gateH = laneH - 16;
+        const x = game.obstacleX;
+        const color = palette[lane];
+        ctx.shadowColor = "rgba(0,0,0,.18)";
+        ctx.shadowBlur = 12;
+        ctx.shadowOffsetY = 4;
+        const grad = ctx.createLinearGradient(x, y, x + pipeW, y + gateH);
+        grad.addColorStop(0, color);
+        grad.addColorStop(1, shadeColor(color, -18));
+        ctx.fillStyle = grad;
+        roundRect(ctx, x, y, pipeW, gateH, 18);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
+        ctx.fillStyle = "rgba(255,255,255,.96)";
+        roundRect(ctx, x + 10, y + 10, pipeW - 20, gateH - 20, 12);
         ctx.fill();
         ctx.fillStyle = "#17212b";
-        ctx.font = `${Math.max(11, Math.min(15, w / 64))}px Inter, sans-serif`;
+        const optFont = Math.max(13, Math.min(20, w / 52));
+        ctx.font = `900 ${optFont}px Inter, sans-serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        wrapText(ctx, game.challenge.options[lane], x + pipeW / 2, y + gateH / 2, pipeW - 32, 17, 4);
+        wrapText(ctx, game.challenge.options[lane], x + pipeW / 2, y + gateH / 2, pipeW - 32, optFont + 4, 3);
       }
       drawBird(ctx, game.bird.x, game.bird.y, w);
     }
 
+    function drawCloud(ctx, x, y, s) {
+      ctx.beginPath();
+      ctx.arc(x, y, s, 0, Math.PI * 2);
+      ctx.arc(x + s * .8, y - s * .2, s * .75, 0, Math.PI * 2);
+      ctx.arc(x + s * 1.6, y, s * .85, 0, Math.PI * 2);
+      ctx.arc(x + s * .9, y + s * .35, s * .7, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function shadeColor(hex, percent) {
+      const num = parseInt(hex.replace("#", ""), 16);
+      const r = Math.max(0, Math.min(255, (num >> 16) + Math.round(255 * percent / 100)));
+      const g = Math.max(0, Math.min(255, ((num >> 8) & 0xff) + Math.round(255 * percent / 100)));
+      const b = Math.max(0, Math.min(255, (num & 0xff) + Math.round(255 * percent / 100)));
+      return `rgb(${r},${g},${b})`;
+    }
+
     function drawBird(ctx, x, y, w) {
-      const s = Math.max(28, Math.min(44, w / 21));
+      const s = Math.max(34, Math.min(54, w / 18));
+      const wingBeat = Math.sin(performance.now() / 90) * .45;
       ctx.save();
       ctx.translate(x, y);
-      ctx.rotate(Math.max(-.45, Math.min(.45, game.bird.vy / 700)));
-      const body = ctx.createRadialGradient(-s * .15, -s * .2, s * .2, 0, 0, s);
-      body.addColorStop(0, "#ffe68a");
-      body.addColorStop(1, "#f3b63c");
+      ctx.rotate(Math.max(-.5, Math.min(.5, game.bird.vy / 650)));
+
+      ctx.fillStyle = "rgba(0,0,0,.18)";
+      ctx.beginPath();
+      ctx.ellipse(4, s * .78, s * .95, s * .18, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      const body = ctx.createRadialGradient(-s * .18, -s * .28, s * .22, 0, 0, s * 1.05);
+      body.addColorStop(0, "#ffeaa0");
+      body.addColorStop(.7, "#f5bb3a");
+      body.addColorStop(1, "#d88c10");
       ctx.fillStyle = body;
       ctx.beginPath();
-      ctx.ellipse(0, 0, s, s * .78, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, 0, s, s * .82, 0, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = "rgba(111, 70, 12, .26)";
+      ctx.strokeStyle = "rgba(111, 70, 12, .35)";
       ctx.lineWidth = 3;
       ctx.stroke();
-      ctx.fillStyle = "#fff6ce";
-      ctx.beginPath();
-      ctx.ellipse(-s * .26, s * .08, s * .42, s * .28, -.35, 0, Math.PI * 2);
-      ctx.fill();
+
       ctx.save();
-      ctx.rotate(-.22);
-      ctx.fillStyle = "#7a5317";
-      ctx.font = `900 ${Math.max(8, s * .22)}px Inter, sans-serif`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      const wingWord = String(game?.challenge?.entry?.latin || "").replace(/\s+/g, " ").slice(0, 11);
-      ctx.fillText(wingWord, -s * .27, s * .1, s * .72);
+      ctx.translate(-s * .15, -s * .05);
+      ctx.rotate(wingBeat);
+      const wingGrad = ctx.createLinearGradient(0, -s * .4, 0, s * .4);
+      wingGrad.addColorStop(0, "#ffd26a");
+      wingGrad.addColorStop(1, "#e39a1a");
+      ctx.fillStyle = wingGrad;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, s * .52, s * .32, -.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(111, 70, 12, .4)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
       ctx.restore();
+
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.arc(s * .38, -s * .22, s * .22, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(111, 70, 12, .3)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
       ctx.fillStyle = "#17212b";
       ctx.beginPath();
-      ctx.arc(s * .36, -s * .2, s * .09, 0, Math.PI * 2);
+      ctx.arc(s * .43, -s * .2, s * .09, 0, Math.PI * 2);
       ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.arc(s * .46, -s * .23, s * .035, 0, Math.PI * 2);
+      ctx.fill();
+
       ctx.fillStyle = "#ef6a4f";
       ctx.beginPath();
-      ctx.moveTo(s * .77, -s * .17);
-      ctx.lineTo(s * 1.28, 0);
-      ctx.lineTo(s * .77, s * .17);
+      ctx.moveTo(s * .78, -s * .1);
+      ctx.lineTo(s * 1.24, 0);
+      ctx.lineTo(s * .78, s * .12);
       ctx.closePath();
       ctx.fill();
-      ctx.fillStyle = "rgba(255,255,255,.54)";
+      ctx.strokeStyle = "rgba(120, 40, 20, .4)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = "#e38a1a";
       ctx.beginPath();
-      ctx.ellipse(-s * .25, -s * .06, s * .34, s * .18, -.45, 0, Math.PI * 2);
+      ctx.moveTo(-s * .1, s * .7);
+      ctx.lineTo(-s * .3, s * .95);
+      ctx.lineTo(s * .1, s * .88);
+      ctx.closePath();
       ctx.fill();
+
       ctx.restore();
     }
 
