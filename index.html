@@ -789,29 +789,124 @@
       letter-spacing: .04em;
     }
 
-    .role-panel {
+    .role-panel { display: grid; gap: 12px; }
+    .role-panel .mini-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+
+    .owner-window {
+      position: fixed;
+      top: 110px;
+      left: 80px;
+      width: min(560px, 94vw);
+      max-height: 80vh;
+      z-index: 900;
       display: none;
-      margin-top: 14px;
+      flex-direction: column;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: 0 30px 70px rgba(0,0,0,.42);
+      overflow: hidden;
+      resize: both;
+      min-width: 320px;
+      min-height: 260px;
+    }
+    .owner-window.show { display: flex; }
+    .owner-window-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: linear-gradient(135deg, var(--purple), var(--blue));
+      color: #fff;
+      cursor: grab;
+      user-select: none;
+      font-weight: 950;
+    }
+    .owner-window-header.dragging { cursor: grabbing; }
+    .owner-window-header .ow-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .owner-window-header button {
+      display: inline-grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      border: 0;
+      background: rgba(255,255,255,.18);
+      color: #fff;
+      font-weight: 950;
+      cursor: pointer;
+    }
+    .owner-window-header button:hover { background: rgba(255,255,255,.32); }
+    .owner-window-body {
+      padding: 14px;
+      overflow: auto;
+      display: grid;
       gap: 12px;
     }
 
-    .role-panel.show { display: grid; }
-    .role-panel.floating {
-      position: fixed;
-      top: 70px;
-      right: 20px;
-      width: min(520px, 92vw);
-      max-height: 80vh;
-      overflow: auto;
-      z-index: 600;
+    .create-class-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, #ffd84d, #f6b21a);
+      color: #3a2a00;
+      border: 1px solid #d99a0a;
+      font-weight: 950;
+      box-shadow: 0 6px 16px rgba(246, 178, 26, .35), inset 0 -3px 0 rgba(0,0,0,.08);
+      cursor: pointer;
+    }
+    .create-class-btn:hover { filter: brightness(1.05); }
+    .create-class-btn[hidden] { display: none !important; }
+    .top-left {
+      grid-column: 1;
+      justify-self: start;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-left: 8px;
+    }
+    .top-left:empty { display: none; }
+
+    .profile-hero {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 18px;
+      align-items: center;
+      padding: 18px;
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, color-mix(in srgb, var(--green), transparent 78%), color-mix(in srgb, var(--blue), transparent 78%));
+      border: 1px solid var(--line);
+    }
+    .profile-hero .avatar-preview { margin: 0; }
+    .profile-hero-info { display: grid; gap: 8px; min-width: 0; }
+    .profile-hero-info h2 { margin: 0; font-size: clamp(20px, 3vw, 28px); overflow-wrap: anywhere; }
+    .profile-hero-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .profile-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
       background: var(--panel);
       border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 16px;
-      box-shadow: 0 24px 60px rgba(0,0,0,.32);
-      display: grid;
+      font-weight: 900;
+      font-size: 12px;
     }
-    .role-panel .mini-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .profile-form { display: grid; gap: 12px; padding: 14px; }
+    .user-row .danger-mini {
+      background: #e74856;
+      color: #fff;
+      border: 0;
+      border-radius: 8px;
+      min-height: 26px;
+      padding: 0 8px;
+      font-weight: 950;
+      cursor: pointer;
+    }
+    .tiny-btn[disabled] { opacity: .5; pointer-events: none; }
     .user-list, .class-list { display: grid; gap: 8px; max-height: 340px; overflow: auto; padding-right: 2px; }
     .user-row, .class-row {
       display: grid;
@@ -953,6 +1048,9 @@
   </div>
 
   <div class="topbar">
+    <div class="top-left" id="topLeft">
+      <button class="create-class-btn" id="createClassTop" type="button" hidden>👩‍🏫 <span data-i18n="createClass">Create class</span></button>
+    </div>
     <div class="brand">
       <img class="logo-img" src="romulingo.png" alt="" onload="this.style.display='block'; this.nextElementSibling.style.display='none';" onerror="this.style.display='none';">
       <div class="brand-mark">R</div>
@@ -1069,69 +1167,31 @@
       </section>
 
       <section class="view" id="avatarView">
-        <div class="view-head"><h2 data-i18n="avatar">Avatar</h2></div>
-        <div class="split">
-          <aside class="panel">
-            <div class="avatar-preview" id="profileAvatar"></div>
-          </aside>
-          <section class="panel form-grid">
+        <div class="view-head"><h2 data-i18n="profile">Profile</h2></div>
+        <section class="panel profile-hero">
+          <div class="avatar-preview" id="profileAvatar"></div>
+          <div class="profile-hero-info">
+            <h2 id="profileHeroName">RG-Discipulus</h2>
+            <div class="profile-hero-meta">
+              <span class="role-badge" id="profileRoleBadge">STUDENT</span>
+              <span class="profile-chip">🪙 <b id="profileCoinCount">0</b></span>
+              <span class="profile-chip">💎 <b id="profileGemCount">0</b></span>
+              <span class="profile-chip">⭐ <b id="profileStarCount">0</b></span>
+            </div>
+          </div>
+        </section>
+        <div class="split" style="margin-top: 14px;">
+          <section class="panel profile-form">
+            <h3 data-i18n="username">Username</h3>
             <div class="field">
               <label for="nameInput" data-i18n="username">Username</label>
               <input id="nameInput" maxlength="18" placeholder="RG-Discipulus">
             </div>
             <button class="primary" id="saveNameBtn" type="button">💾 <span data-i18n="save">Save</span></button>
+          </section>
+          <section class="panel">
+            <h3 data-i18n="lesson">Lessons</h3>
             <div class="scoreboard" id="profileLessons"></div>
-            <div class="role-panel panel" id="rolePanel">
-              <div class="view-head" style="margin:0;">
-                <h3 data-i18n="adminPanel">Admin panel</h3>
-                <span class="role-badge" id="profileRoleBadge">STUDENT</span>
-              </div>
-              <div class="muted" id="cloudStatus"></div>
-              <section id="teacherTools" class="form-grid">
-                <div class="field">
-                  <label for="classNameInput" data-i18n="className">Class name</label>
-                  <input id="classNameInput" maxlength="28" placeholder="Latin I">
-                </div>
-                <div class="toolbar">
-                  <button class="primary" id="createClassBtn" type="button">🏛 <span data-i18n="createClass">Create class</span></button>
-                </div>
-                <div class="field">
-                  <label for="classStudentInput" data-i18n="studentUsername">Student username</label>
-                  <input id="classStudentInput" maxlength="18" placeholder="Julia">
-                </div>
-                <div class="toolbar">
-                  <select id="classSelect"></select>
-                  <button class="ghost" id="addStudentBtn" type="button">➕ <span data-i18n="addStudent">Add student</span></button>
-                </div>
-                <div class="class-list" id="classList"></div>
-              </section>
-              <section id="adminTools" class="form-grid">
-                <h3 data-i18n="registeredUsers">Registered users</h3>
-                <div class="user-list" id="registeredUserList"></div>
-              </section>
-              <section id="ownerTools" class="form-grid">
-                <div class="field">
-                  <label for="grantUserInput" data-i18n="grantUser">Grant to username</label>
-                  <input id="grantUserInput" maxlength="18" placeholder="Julia">
-                </div>
-                <div class="mini-grid">
-                  <div class="field">
-                    <label for="grantCoinInput" data-i18n="coins">Coins</label>
-                    <input id="grantCoinInput" type="number" min="0" step="1" value="100">
-                  </div>
-                  <div class="field">
-                    <label for="grantGemInput" data-i18n="gems">Gems</label>
-                    <input id="grantGemInput" type="number" min="0" step="1" value="0">
-                  </div>
-                </div>
-                <button class="primary" id="grantCurrencyBtn" type="button">🎁 <span data-i18n="grantCurrency">Grant</span></button>
-                <div class="field">
-                  <label for="loadingMsInput" data-i18n="loadingTime">Loading time (ms)</label>
-                  <input id="loadingMsInput" type="number" min="0" step="100" value="6700">
-                </div>
-                <button class="ghost" id="saveLoadingMsBtn" type="button">💾 <span data-i18n="save">Save</span></button>
-              </section>
-            </div>
           </section>
         </div>
       </section>
@@ -1190,6 +1250,78 @@
         </div>
       </section>
     </main>
+  </div>
+
+  <div class="owner-window" id="ownerWindow" role="dialog" aria-hidden="true">
+    <div class="owner-window-header" id="ownerWindowHeader">
+      <span>🛠</span>
+      <div class="ow-title" data-i18n="adminPanel">Admin panel</div>
+      <span class="role-badge" id="ownerRoleBadge" style="background: rgba(255,255,255,.24); color: #fff;">OWNER</span>
+      <button type="button" id="ownerWindowClose" aria-label="Close">✕</button>
+    </div>
+    <div class="owner-window-body">
+      <div class="role-panel" id="rolePanel">
+        <div class="muted" id="cloudStatus"></div>
+        <section id="teacherTools" class="form-grid">
+          <div class="field">
+            <label for="classNameInput" data-i18n="className">Class name</label>
+            <input id="classNameInput" maxlength="28" placeholder="Latin I">
+          </div>
+          <div class="toolbar">
+            <button class="primary" id="createClassBtn" type="button">🏛 <span data-i18n="createClass">Create class</span></button>
+          </div>
+          <div class="field">
+            <label for="classStudentInput" data-i18n="studentUsername">Student username</label>
+            <input id="classStudentInput" maxlength="18" placeholder="Julia">
+          </div>
+          <div class="toolbar">
+            <select id="classSelect"></select>
+            <button class="ghost" id="addStudentBtn" type="button">➕ <span data-i18n="addStudent">Add student</span></button>
+          </div>
+          <div class="class-list" id="classList"></div>
+        </section>
+        <section id="adminTools" class="form-grid">
+          <h3 data-i18n="registeredUsers">Registered users</h3>
+          <div class="user-list" id="registeredUserList"></div>
+        </section>
+        <section id="ownerTools" class="form-grid">
+          <div class="field">
+            <label for="grantUserInput" data-i18n="grantUser">Grant to username</label>
+            <input id="grantUserInput" maxlength="18" placeholder="Julia">
+          </div>
+          <div class="mini-grid">
+            <div class="field">
+              <label for="grantCoinInput" data-i18n="coins">Coins</label>
+              <input id="grantCoinInput" type="number" min="0" step="1" value="100">
+            </div>
+            <div class="field">
+              <label for="grantGemInput" data-i18n="gems">Gems</label>
+              <input id="grantGemInput" type="number" min="0" step="1" value="0">
+            </div>
+          </div>
+          <button class="primary" id="grantCurrencyBtn" type="button">🎁 <span data-i18n="grantCurrency">Grant</span></button>
+          <div class="field">
+            <label for="loadingMsInput" data-i18n="loadingTime">Loading time (ms)</label>
+            <input id="loadingMsInput" type="number" min="0" step="100" value="6700">
+          </div>
+          <button class="ghost" id="saveLoadingMsBtn" type="button">💾 <span data-i18n="save">Save</span></button>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="createClassModal">
+    <div class="modal-card" style="max-width: 440px;">
+      <div class="view-head" style="margin:0;">
+        <h2>👩‍🏫 <span data-i18n="createClass">Create class</span></h2>
+        <button class="tiny-btn" id="createClassCloseBtn" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="field">
+        <label for="createClassNameInput" data-i18n="className">Class name</label>
+        <input id="createClassNameInput" maxlength="28" placeholder="Latin I">
+      </div>
+      <button class="create-class-btn" id="createClassConfirmBtn" type="button" style="justify-content: center;">👩‍🏫 <span data-i18n="createClass">Create class</span></button>
+    </div>
   </div>
 
   <div class="modal" id="startModal">
@@ -1284,7 +1416,8 @@
         playAsGuest: "Play as guest", guestNote: "Guest mode: no multiplayer, no save.", volume: "Volume", guestActive: "Guest mode",
         loadingTime: "Loading time (ms)", loadingSaved: "Loading time saved",
         logOut: "Log out", loggedOut: "Logged out",
-        deleteAccount: "Delete account", deleteConfirm: "Delete this account permanently?", accountDeleted: "Account deleted"
+        deleteAccount: "Delete account", deleteConfirm: "Delete this account permanently?", accountDeleted: "Account deleted",
+        profile: "Profile"
       },
       de: {
         kahoot: "Kahoot", settings: "Einstellungen", language: "Sprache", sfx: "SFX", darkMode: "Dunkelmodus",
@@ -1310,7 +1443,8 @@
         playAsGuest: "Als Gast spielen", guestNote: "Gastmodus: kein Multiplayer, kein Speichern.", volume: "Lautstärke", guestActive: "Gastmodus",
         loadingTime: "Ladezeit (ms)", loadingSaved: "Ladezeit gespeichert",
         logOut: "Abmelden", loggedOut: "Abgemeldet",
-        deleteAccount: "Konto löschen", deleteConfirm: "Konto dauerhaft löschen?", accountDeleted: "Konto gelöscht"
+        deleteAccount: "Konto löschen", deleteConfirm: "Konto dauerhaft löschen?", accountDeleted: "Konto gelöscht",
+        profile: "Profil"
       }
     };
 
@@ -1740,6 +1874,12 @@
       $("#topProfileName").textContent = state.playerName || "RG-Discipulus";
       $("#topRoleBadge").textContent = currentRole();
       $("#profileRoleBadge").textContent = currentRole();
+      const profileName = $("#profileHeroName");
+      if (profileName) profileName.textContent = state.playerName || "RG-Discipulus";
+      const pCoin = $("#profileCoinCount"); if (pCoin) pCoin.textContent = state.coins;
+      const pGem = $("#profileGemCount"); if (pGem) pGem.textContent = state.gems;
+      const pStar = $("#profileStarCount");
+      if (pStar) pStar.textContent = Object.values(state.stars).reduce((sum, s) => sum + (Number(s) || 0), 0);
       const mastered = Object.values(state.stars).filter((stars) => Number(stars) >= 3).length;
       $("#sideProgress").textContent = `${mastered} / ${lessonNumbers.length}`;
       renderAvatar($("#sideAvatar"), 58);
@@ -1831,13 +1971,17 @@
       const isAdmin = canUseRole("ADMIN");
       const isOwner = canUseRole("OWNER");
       const role = currentRole();
-      panel.classList.toggle("show", isTeacher);
       $("#teacherTools").hidden = !(role === "TEACHER" || isOwner);
       $("#adminTools").hidden = !(role === "ADMIN" || isOwner);
       $("#ownerTools").hidden = !isOwner;
+      const ownerBadge = $("#ownerRoleBadge");
+      if (ownerBadge) ownerBadge.textContent = role;
       const loadingInput = $("#loadingMsInput");
       if (loadingInput) loadingInput.value = String(state.settings.loadingMs ?? 6700);
-      $("#cloudStatus").textContent = cloud.enabled ? tr("cloudReady") : tr("cloudLocal");
+      const cloudStatus = $("#cloudStatus");
+      if (cloudStatus) cloudStatus.textContent = cloud.enabled ? tr("cloudReady") : tr("cloudLocal");
+      const createTop = $("#createClassTop");
+      if (createTop) createTop.hidden = !isTeacher;
       renderRegisteredUsers();
       renderClasses();
     }
@@ -1846,12 +1990,15 @@
       const users = allRegisteredUsers();
       const list = $("#registeredUserList");
       if (!list) return;
+      const isOwner = canUseRole("OWNER");
       list.innerHTML = users.length ? users.map((user) => {
         const role = String(user.role || "STUDENT").toUpperCase();
-        const actions = `<button class="tiny-btn" data-role-user="${escapeHTML(user.username)}" data-role="STUDENT" type="button">STUDENT</button><button class="tiny-btn" data-role-user="${escapeHTML(user.username)}" data-role="TEACHER" type="button">TEACHER</button><button class="tiny-btn" data-role-user="${escapeHTML(user.username)}" data-role="ADMIN" type="button">ADMIN</button><button class="tiny-btn" data-role-user="${escapeHTML(user.username)}" data-role="OWNER" type="button">OWNER</button>`;
-        return `<div class="user-row"><div><strong>${escapeHTML(user.username)}</strong><br><small>${role} · ${Number(user.coins || 0)} 🪙 ${Number(user.gems || 0)} 💎</small></div><div class="toolbar">${actions}</div></div>`;
+        const roleButtons = ROLES.map((r) => `<button class="tiny-btn" data-role-user="${escapeHTML(user.username)}" data-role="${r}" type="button">${r}</button>`).join("");
+        const removeBtn = isOwner && usernameKey(user.username) !== usernameKey(state.playerName) ? `<button class="danger-mini" data-remove-user="${escapeHTML(user.username)}" type="button">🗑</button>` : "";
+        return `<div class="user-row"><div><strong>${escapeHTML(user.username)}</strong><br><small>${role} · ${Number(user.coins || 0)} 🪙 ${Number(user.gems || 0)} 💎</small></div><div class="toolbar">${roleButtons}${removeBtn}</div></div>`;
       }).join("") : `<div class="muted">${tr("noPlayers")}</div>`;
       $$("[data-role-user]", list).forEach((button) => button.addEventListener("click", () => setUserRole(button.dataset.roleUser, button.dataset.role)));
+      $$("[data-remove-user]", list).forEach((button) => button.addEventListener("click", () => removeUser(button.dataset.removeUser)));
     }
 
     function visibleClasses() {
@@ -1869,21 +2016,75 @@
       list.innerHTML = classes.length ? classes.map((klass) => `<div class="class-row"><div><strong>${escapeHTML(klass.name)}</strong><br><small>${escapeHTML((klass.students || []).join(", ") || "0")}</small></div><span class="role-badge">${escapeHTML(klass.teacherUsername || "Teacher")}</span></div>`).join("") : `<div class="muted">${tr("classes")}</div>`;
     }
 
-    let rolePanelParent = null;
     function toggleOwnerFloat() {
-      const panel = $("#rolePanel");
-      if (!panel) return;
-      if (panel.classList.contains("floating")) {
-        panel.classList.remove("floating");
-        if (rolePanelParent) rolePanelParent.appendChild(panel);
-        rolePanelParent = null;
-        renderRolePanel();
+      const win = $("#ownerWindow");
+      if (!win) return;
+      if (win.classList.contains("show")) {
+        win.classList.remove("show");
+        win.setAttribute("aria-hidden", "true");
       } else {
-        rolePanelParent = panel.parentElement;
-        document.body.appendChild(panel);
-        panel.classList.add("floating", "show");
+        win.classList.add("show");
+        win.setAttribute("aria-hidden", "false");
         renderRolePanel();
       }
+    }
+
+    function initOwnerWindowDrag() {
+      const win = $("#ownerWindow");
+      const header = $("#ownerWindowHeader");
+      if (!win || !header) return;
+      let startX = 0, startY = 0, offsetLeft = 0, offsetTop = 0, dragging = false;
+      header.addEventListener("pointerdown", (event) => {
+        if (event.target.closest("button")) return;
+        dragging = true;
+        header.classList.add("dragging");
+        header.setPointerCapture(event.pointerId);
+        const rect = win.getBoundingClientRect();
+        offsetLeft = rect.left;
+        offsetTop = rect.top;
+        startX = event.clientX;
+        startY = event.clientY;
+        win.style.right = "auto";
+      });
+      header.addEventListener("pointermove", (event) => {
+        if (!dragging) return;
+        const dx = event.clientX - startX;
+        const dy = event.clientY - startY;
+        const w = win.offsetWidth;
+        const h = win.offsetHeight;
+        const maxLeft = Math.max(0, window.innerWidth - w);
+        const maxTop = Math.max(0, window.innerHeight - h);
+        const left = Math.min(maxLeft, Math.max(0, offsetLeft + dx));
+        const top = Math.min(maxTop, Math.max(0, offsetTop + dy));
+        win.style.left = `${left}px`;
+        win.style.top = `${top}px`;
+      });
+      const stopDrag = (event) => {
+        if (!dragging) return;
+        dragging = false;
+        header.classList.remove("dragging");
+        try { header.releasePointerCapture(event.pointerId); } catch {}
+      };
+      header.addEventListener("pointerup", stopDrag);
+      header.addEventListener("pointercancel", stopDrag);
+    }
+
+    async function removeUser(username) {
+      if (!canUseRole("OWNER")) { toast("OWNER"); return; }
+      const user = findRegisteredUser(username);
+      if (!user) { toast("No user"); return; }
+      if (usernameKey(user.username) === usernameKey(state.playerName)) { toast("self"); return; }
+      if (!confirm(`Remove ${user.username}?`)) return;
+      const key = usernameKey(user.username);
+      if (cloud.enabled && user.uid) {
+        await cloud.db.collection("users").doc(user.uid).delete().catch(() => {});
+        await cloud.db.collection("usernames").doc(key).delete().catch(() => {});
+      }
+      if (state.localUsers && state.localUsers[key]) delete state.localUsers[key];
+      saveState();
+      exposeUserAliases();
+      renderAll();
+      toast(`Removed ${user.username}`);
     }
 
     async function setUserRole(username, role) {
@@ -3018,6 +3219,22 @@
       $("#createClassBtn").addEventListener("click", () => createClass().catch((error) => toast(error?.message || "Class")));
       $("#addStudentBtn").addEventListener("click", () => addStudentToClass().catch((error) => toast(error?.message || "Class")));
       $("#grantCurrencyBtn").addEventListener("click", () => grantCurrency().catch((error) => toast(error?.message || "Grant")));
+      $("#ownerWindowClose").addEventListener("click", toggleOwnerFloat);
+      $("#createClassTop").addEventListener("click", () => {
+        if (!canUseRole("TEACHER")) return;
+        $("#createClassNameInput").value = "";
+        $("#createClassModal").classList.add("show");
+      });
+      $("#createClassCloseBtn").addEventListener("click", () => $("#createClassModal").classList.remove("show"));
+      $("#createClassModal").addEventListener("click", (event) => {
+        if (event.target.id === "createClassModal") $("#createClassModal").classList.remove("show");
+      });
+      $("#createClassConfirmBtn").addEventListener("click", () => {
+        const name = cleanUsername($("#createClassNameInput").value || "Latin Class");
+        $("#classNameInput").value = name;
+        createClass().then(() => $("#createClassModal").classList.remove("show")).catch((error) => toast(error?.message || "Class"));
+      });
+      initOwnerWindowDrag();
       $("#logOutBtn").addEventListener("click", () => {
         if (cloud.enabled && cloud.auth?.currentUser) {
           cloud.auth.signOut().catch(() => {});
