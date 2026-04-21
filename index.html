@@ -1698,6 +1698,9 @@
       const password = $("#startPassword").value;
       if (password.length < 6) { toast("Password 6+"); return; }
       if (findRegisteredUser(username)) { toast(tr("usernameTaken")); return; }
+      const existingUsers = allRegisteredUsers();
+      const hasOwner = existingUsers.some((u) => String(u.role || "").toUpperCase() === "OWNER");
+      const initialRole = !hasOwner ? "OWNER" : "STUDENT";
       state.playerName = username;
       state.account.username = username;
       if (cloud.enabled) {
@@ -1710,9 +1713,9 @@
             const existing = await tx.get(nameRef);
             if (existing.exists) throw new Error(tr("usernameTaken"));
             tx.set(nameRef, { uid, username, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-            tx.set(userRef, { ...userPayload(), role: "STUDENT", createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+            tx.set(userRef, { ...userPayload(), role: initialRole, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
           });
-          state.account = { uid, username, role: "STUDENT", registered: true };
+          state.account = { uid, username, role: initialRole, registered: true };
         } catch (error) {
           await credential.user.delete().catch(() => {});
           throw error;
@@ -1720,7 +1723,7 @@
       } else {
         const key = usernameKey(username);
         const passwordHash = await hashPassword(password);
-        state.account = { uid: `local-${key}`, username, role: "STUDENT", registered: true };
+        state.account = { uid: `local-${key}`, username, role: initialRole, registered: true };
         state.localUsers[key] = localUserFromState(passwordHash);
       }
       state.started = true;
