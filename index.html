@@ -1024,50 +1024,53 @@
       body { -webkit-text-size-adjust: 100%; }
       .topbar {
         position: sticky;
-        min-height: 80px;
+        min-height: 72px;
         padding: 8px 10px calc(8px + env(safe-area-inset-top, 0px));
-        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        grid-template-columns: auto 1fr auto;
         gap: 6px;
         backdrop-filter: none;
         background: var(--panel);
+        border-bottom-width: 1px;
       }
-      .top-left { justify-self: start; }
-      .top-actions { justify-self: end; }
+      .top-left { justify-self: start; padding-left: 0; gap: 4px; }
+      .top-actions { justify-self: end; gap: 4px; }
       .brand strong { display: none; }
-      .shell { padding: 10px 8px 120px; gap: 10px; max-width: 100vw; }
+      .shell { padding: 10px 8px 130px; gap: 12px; max-width: 100vw; }
       .view { padding: 12px; }
-      .view-head { display: grid; }
-      .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .view-head { display: grid; gap: 10px; }
+      .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .summary > div { padding: 10px; }
+      .summary b { font-size: 20px; }
       .nav {
         width: calc(100vw - 16px);
         padding: 6px;
         backdrop-filter: none;
         background: var(--panel);
+        border-radius: 18px;
       }
-      .nav-btn { min-height: 58px; font-size: 12px; padding: 0 4px; gap: 3px; }
+      .nav-btn { min-height: 56px; font-size: 11px; padding: 0 2px; gap: 2px; }
       .top-wallet { display: none; }
       .profile-top { display: none; }
       #topRoleBadge { display: none; }
       .top-actions { gap: 4px; }
-      .top-actions .tiny-btn { min-width: 38px; padding: 0 8px; }
-      .create-class-btn { padding: 0 10px; font-size: 12px; }
+      .top-actions .tiny-btn { min-width: 36px; padding: 0 6px; min-height: 36px; }
+      .create-class-btn { padding: 0 8px; font-size: 11px; min-height: 36px; }
       .create-class-btn span { display: none; }
-      .top-left { padding-left: 0; }
       .brand {
         width: auto;
-        min-width: 160px;
-        max-width: 260px;
-        height: 60px;
+        min-width: 140px;
+        max-width: 200px;
+        height: 52px;
         justify-self: center;
         overflow: visible;
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
       }
       .logo-img {
         position: static;
-        width: 58px;
-        height: 58px;
+        width: 48px;
+        height: 48px;
         transform: none;
         display: block;
         flex-shrink: 0;
@@ -1075,59 +1078,109 @@
       .logo-text-img {
         position: static;
         width: auto;
-        height: 54px;
-        max-width: 170px;
+        height: 44px;
+        max-width: 120px;
         transform: scale(2);
         transform-origin: left center;
-        margin-right: 60px;
+        margin-right: 50px;
         object-fit: contain;
       }
-      .brand-mark { position: static; width: 44px; height: 44px; }
+      .brand-mark { position: static; width: 38px; height: 38px; font-size: 16px; }
       .hero-logo { display: none; }
       .mobile-status {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 10px;
-        padding: 12px 14px;
+        gap: 8px;
+        padding: 10px 12px;
         margin-bottom: 12px;
         border-radius: var(--radius);
         background: linear-gradient(135deg, color-mix(in srgb, var(--green), transparent 82%), color-mix(in srgb, var(--blue), transparent 82%));
         border: 1px solid var(--line);
       }
-      .mobile-status-user { display: flex; align-items: center; gap: 10px; min-width: 0; }
+      .mobile-status-user { display: flex; align-items: center; gap: 8px; min-width: 0; }
       .mobile-status-name { display: grid; gap: 2px; min-width: 0; }
-      .mobile-status-name strong { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 130px; }
-      .mobile-status-name .role-badge { font-size: 10px; min-height: 22px; padding: 0 7px; justify-self: start; }
-      .mobile-status-wallet { display: flex; gap: 6px; flex-shrink: 0; }
-      .mobile-status-wallet .wallet-chip { min-height: 34px; padding: 0 8px; font-size: 12px; }
-      .path-step { min-height: 112px; grid-template-columns: minmax(0, 1fr) 86px minmax(0, 1fr); gap: 8px; }
-      .path-node { width: 78px; height: 78px; font-size: 26px; }
-      .path-label { max-width: min(132px, calc(50vw - 58px)); padding: 8px; }
-      .path-label strong { font-size: 14px; }
-      .reward-node { min-height: 42px; padding: 6px 8px; gap: 5px; }
-      .reward-icon { width: 28px; height: 28px; font-size: 22px; }
-      .reward-text { font-size: 12px; }
-      .reward-node::before { width: 22px; border-top-width: 3px; }
+      .mobile-status-name strong { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 110px; }
+      .mobile-status-name .role-badge { font-size: 9px; min-height: 20px; padding: 0 6px; justify-self: start; }
+      .mobile-status-wallet { display: flex; gap: 4px; flex-shrink: 0; }
+      .mobile-status-wallet .wallet-chip { min-height: 30px; padding: 0 6px; font-size: 11px; }
+      .path-step { min-height: 100px; grid-template-columns: minmax(0, 1fr) 72px minmax(0, 1fr); gap: 6px; }
+      .path-node { width: 68px; height: 68px; font-size: 22px; border-width: 4px; }
+      .path-label { max-width: min(110px, calc(48vw - 50px)); padding: 6px; }
+      .path-label strong { font-size: 12px; }
+      .path-label .stars { font-size: 12px; }
+      .path-label .muted { font-size: 10px; }
+      .reward-node { min-height: 38px; padding: 4px 6px; gap: 4px; font-size: 10px; }
+      .reward-icon { width: 24px; height: 24px; font-size: 18px; }
+      .reward-text { font-size: 10px; }
       .wallet { grid-template-columns: 1fr 1fr; }
-      .kahoot-options, .memory-board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .choice-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-      canvas { min-height: 260px; aspect-ratio: 4 / 3; }
-      .watermark { top: 68px; font-size: 9px; }
-      .settings-menu { top: 76px; right: 8px; }
+      .kahoot-options { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .memory-board { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; min-height: 320px; padding: 10px; }
+      .memory-card { min-height: 72px; padding: 8px; font-size: 12px; }
+      .choice-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+      .choice { min-height: 54px; font-size: 26px; }
+      canvas { min-height: 220px; aspect-ratio: 4 / 3; }
+      .watermark { top: 58px; font-size: 8px; right: 8px; }
+      .settings-menu { top: 68px; right: 6px; width: calc(100vw - 12px); }
       .owner-window {
         left: 4px !important;
         right: 4px !important;
-        top: 76px !important;
+        top: 68px !important;
         width: auto;
-        max-height: 78vh;
+        max-height: 72vh;
         resize: none;
       }
       .owner-window-header { cursor: default; }
-      .profile-hero { grid-template-columns: 1fr; text-align: center; justify-items: center; padding: 14px; }
-      .profile-hero-info h2 { font-size: 22px; }
-      .modal-card { width: 96vw; padding: 14px; }
+      .owner-window-body { padding: 12px; gap: 10px; }
+      .profile-hero { grid-template-columns: 1fr; text-align: center; justify-items: center; padding: 12px; }
+      .profile-hero-info h2 { font-size: 20px; }
+      .profile-hero-meta { justify-content: center; }
+      .profile-chip { font-size: 11px; padding: 3px 8px; }
+      .modal-card { width: 96vw; padding: 14px; max-height: calc(100dvh - 60px); }
+      .modal-card.start-card { width: 98vw; }
+      .start-settings { padding: 8px; gap: 6px; }
+      .start-settings .switch-row { padding: 6px 0; }
+      .tutorial-card { padding: 14px; }
+      .tutorial-card b { font-size: clamp(20px, 5vw, 32px); }
+      .account-pane { gap: 10px; }
+      .field input, .field select { min-height: 44px; padding: 0 10px; }
+      .field label { font-size: 11px; }
+      .ghost { min-height: 44px; padding: 0 10px; }
+      .primary { min-height: 48px; padding: 0 14px; }
+      .answer-btn { min-height: 68px; padding: 10px; font-size: 13px; }
+      .shop-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .shop-item { padding: 10px; gap: 8px; }
+      .shop-emoji { font-size: 32px; }
+      .avatar-preview { min-height: 180px; }
+      .emoji-avatar { --size: 80px !important; }
+      .profile-form { gap: 10px; }
+      .user-list, .class-list { max-height: 260px; }
+      .user-row, .class-row { padding: 7px 8px; gap: 6px; }
+      .user-row strong, .class-row strong { font-size: 13px; }
+      .user-row small, .class-row small { font-size: 11px; }
+      .hud-grid { gap: 6px; }
+      .hud-cell { padding: 8px; }
+      .hud-cell b { font-size: 20px; }
+      .game-card { gap: 8px; }
+      .prompt { padding: 10px 12px; }
+      .prompt strong { font-size: 16px; }
+      .toolbar { gap: 6px; }
+      .seg { padding: 4px; gap: 4px; }
+      .seg button { min-height: 34px; font-size: 12px; }
+      .role-panel { gap: 10px; }
+      .role-panel .mini-grid { gap: 8px; }
+      .toast { right: 10px; bottom: 10px; }
+      .toast-item { padding: 10px 12px; font-size: 12px; }
+      .topbar {
+        padding-left: max(8px, env(safe-area-inset-left));
+        padding-right: max(8px, env(safe-area-inset-right));
+      }
+      .side {
+        padding-left: max(6px, env(safe-area-inset-left));
+        padding-right: max(6px, env(safe-area-inset-right));
+      }
       .primary, .ghost, .danger, .tiny-btn, .nav-btn { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+      .nav-btn::before { content: ""; display: block; width: 100%; height: 100%; }
     }
   </style>
 </head>
