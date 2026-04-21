@@ -1,0 +1,2160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Romulingo</title>
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <style>
+    :root {
+      --bg: #f4fbf2;
+      --bg2: #eef7ff;
+      --ink: #17212b;
+      --muted: #657382;
+      --panel: rgba(255, 255, 255, .94);
+      --line: #dce7e1;
+      --soft: #f4f8f6;
+      --green: #24c46f;
+      --green2: #11a761;
+      --blue: #3b82f6;
+      --gold: #f3b63c;
+      --gem: #60a5fa;
+      --bad: #ef5f6f;
+      --purple: #8057ff;
+      --shadow: 0 18px 42px rgba(22, 32, 43, .12);
+      --soft-shadow: 0 10px 24px rgba(22, 32, 43, .08);
+      --radius: 8px;
+    }
+
+    body[data-theme="dark"] {
+      --bg: #101820;
+      --bg2: #172331;
+      --ink: #f3f7f5;
+      --muted: #a8b5c0;
+      --panel: rgba(25, 35, 45, .95);
+      --line: #314252;
+      --soft: #1e2a35;
+      --shadow: 0 18px 42px rgba(0, 0, 0, .35);
+      --soft-shadow: 0 10px 24px rgba(0, 0, 0, .25);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 18% 8%, rgba(36, 196, 111, .13), transparent 28%),
+        radial-gradient(circle at 82% 12%, rgba(59, 130, 246, .13), transparent 30%),
+        linear-gradient(180deg, var(--bg), var(--bg2));
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+      overflow-x: hidden;
+    }
+
+    button, input, select { font: inherit; letter-spacing: 0; }
+    button { border: 0; cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .48; filter: saturate(.55); }
+
+    button, .path-node, .shop-item, .panel, .memory-card, .answer-btn {
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease, opacity .18s ease;
+    }
+
+    button:not(:disabled):hover, .memory-card:not(:disabled):hover {
+      transform: translateY(-2px);
+    }
+
+    button:not(:disabled):active {
+      transform: translateY(1px) scale(.98);
+    }
+
+    .loading-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      display: grid;
+      place-items: center;
+      gap: 20px;
+      padding: 24px;
+      background: #fff;
+      transition: opacity .36s ease, visibility .36s ease;
+      animation: loadingAutoHide .42s ease 1.35s forwards;
+    }
+
+    .loading-screen.hide {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .loading-stack {
+      display: grid;
+      place-items: center;
+      gap: 18px;
+      width: min(920px, 96vw);
+    }
+
+    .loading-stack img {
+      width: min(820px, 92vw);
+      max-height: 82vh;
+      object-fit: contain;
+      animation: loaderPop .6s ease both;
+    }
+
+    .loading-fallback {
+      display: none;
+      place-items: center;
+      width: min(430px, 78vw);
+      min-height: 280px;
+      color: #78bf00;
+      font-size: clamp(42px, 10vw, 88px);
+      font-weight: 950;
+    }
+
+    .loader-ring {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      border: 7px solid #e7f4e3;
+      border-top-color: #78bf00;
+      border-right-color: #ed171f;
+      animation: spin .8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes loadingAutoHide {
+      to { opacity: 0; visibility: hidden; pointer-events: none; }
+    }
+    @keyframes loaderPop {
+      from { opacity: 0; transform: translateY(10px) scale(.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-height: 78px;
+      padding: 8px clamp(10px, 3vw, 28px);
+      background: color-mix(in srgb, var(--panel), transparent 8%);
+      border-bottom: 1px solid color-mix(in srgb, var(--line), transparent 18%);
+      backdrop-filter: blur(18px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      font-weight: 950;
+      font-size: 22px;
+      min-height: 62px;
+    }
+
+    .logo-img {
+      width: 129px;
+      height: 129px;
+      object-fit: contain;
+      display: none;
+    }
+
+    .logo-text-img {
+      width: min(760px, 44vw);
+      max-height: 152px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .brand-fallback {
+      font-weight: 950;
+      font-size: 22px;
+    }
+
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: var(--radius);
+      color: #fff;
+      background: linear-gradient(135deg, var(--green), var(--blue));
+      box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .12);
+      font-weight: 950;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .top-wallet {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 38px;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--soft);
+      font-weight: 900;
+    }
+
+    .profile-top {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 42px;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      color: var(--ink);
+      box-shadow: var(--soft-shadow);
+      font-weight: 900;
+      max-width: 230px;
+    }
+
+    .profile-top strong {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .watermark {
+      position: fixed;
+      top: 68px;
+      right: 16px;
+      z-index: 20;
+      color: color-mix(in srgb, var(--muted), transparent 45%);
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      pointer-events: none;
+    }
+
+    .shell {
+      display: block;
+      width: min(1380px, 100%);
+      margin: 0 auto;
+      padding: 18px clamp(10px, 3vw, 28px) 104px;
+    }
+
+    .side {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 70;
+      display: block;
+      padding: 0 10px max(10px, env(safe-area-inset-bottom));
+      pointer-events: none;
+    }
+
+    .side .profile-card { display: none; }
+
+    .panel, .view, .modal-card, .settings-menu, .path-node, .shop-item, .score-row, .player-pill, .game-picker {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--soft-shadow);
+    }
+
+    .panel { padding: 14px; }
+    .profile-card { display: grid; gap: 12px; }
+    .profile-line { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .profile-line strong { overflow-wrap: anywhere; }
+    .wallet { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .wallet-chip, .tiny-btn, .nav-btn, .primary, .ghost, .danger, .answer-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 42px;
+      padding: 0 12px;
+      border-radius: var(--radius);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .wallet-chip {
+      background: var(--soft);
+      border: 1px solid var(--line);
+      justify-content: flex-start;
+    }
+
+    .nav {
+      pointer-events: auto;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+      width: min(620px, 100%);
+      margin: 0 auto;
+      padding: 7px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: color-mix(in srgb, var(--panel), transparent 4%);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .nav-btn {
+      position: relative;
+      justify-content: flex-start;
+      width: 100%;
+      color: var(--muted);
+      background: color-mix(in srgb, var(--panel), transparent 10%);
+      border: 1px solid transparent;
+      min-height: 58px;
+      flex-direction: column;
+      gap: 2px;
+      font-size: 12px;
+      overflow: hidden;
+    }
+
+    .nav-btn.active {
+      color: var(--ink);
+      border-color: var(--line);
+      background: var(--panel);
+      box-shadow: var(--soft-shadow);
+    }
+
+    .nav-btn.active::after {
+      content: "";
+      position: absolute;
+      left: 24%;
+      right: 24%;
+      bottom: 5px;
+      height: 4px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--green), var(--blue));
+    }
+
+    .primary {
+      color: #fff;
+      background: linear-gradient(135deg, var(--green), var(--green2));
+      box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .13), var(--soft-shadow);
+    }
+
+    .ghost { color: var(--ink); background: var(--panel); border: 1px solid var(--line); }
+    .danger { color: #fff; background: var(--bad); }
+    .tiny-btn { min-height: 36px; padding: 0 10px; background: var(--soft); color: var(--ink); border: 1px solid var(--line); }
+
+    .main { min-width: 0; display: grid; gap: 16px; }
+    .view { display: none; padding: clamp(14px, 2vw, 24px); }
+    .view.active { display: block; animation: viewIn .28s ease both; }
+    .view-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: clamp(31px, 4vw, 54px); line-height: .98; }
+    h2 { font-size: clamp(23px, 2.6vw, 34px); line-height: 1; }
+    h3 { font-size: 16px; }
+    .muted { color: var(--muted); }
+    .toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .summary > div {
+      padding: 12px;
+      border-radius: var(--radius);
+      background: var(--soft);
+      border: 1px solid var(--line);
+    }
+
+    .summary b { display: block; font-size: 24px; line-height: 1; }
+    .summary span { color: var(--muted); font-size: 12px; font-weight: 850; }
+
+    .hero-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 64px;
+    }
+
+    .hero-logo img {
+      width: min(1120px, 88vw);
+      max-height: 344px;
+      object-fit: contain;
+    }
+
+    .path {
+      position: relative;
+      display: grid;
+      gap: 4px;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px 0 26px;
+    }
+
+    .path-lines {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .path-lines path {
+      fill: none;
+      stroke: color-mix(in srgb, var(--green), transparent 28%);
+      stroke-width: 5;
+      stroke-linecap: round;
+      stroke-dasharray: 2 15;
+      animation: pathDash 1.8s linear infinite;
+    }
+
+    .path-step {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 118px minmax(0, 1fr);
+      align-items: center;
+      min-height: 116px;
+      gap: 14px;
+    }
+
+    .path-node { grid-column: 2; justify-self: center; }
+    .path-step.left .path-label, .path-step.center .path-label { grid-column: 1; justify-self: end; text-align: right; }
+    .path-step.right .path-label { grid-column: 3; justify-self: start; text-align: left; }
+    .path-step.left .reward-node, .path-step.center .reward-node { grid-column: 3; justify-self: start; }
+    .path-step.right .reward-node { grid-column: 1; justify-self: end; }
+
+    .path-node {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 92px;
+      height: 92px;
+      padding: 0;
+      border-radius: 50%;
+      color: #fff;
+      background: linear-gradient(135deg, var(--green), var(--blue));
+      border: 5px solid color-mix(in srgb, #fff, transparent 10%);
+      box-shadow: inset 0 -8px 0 rgba(0, 0, 0, .14), 0 16px 26px rgba(36, 196, 111, .24);
+      font-size: 30px;
+      font-weight: 950;
+      animation: nodeFloat 2.8s ease-in-out infinite;
+    }
+
+    .path-step:nth-child(3n) .path-node { animation-delay: -.7s; }
+    .path-step:nth-child(3n + 1) .path-node { animation-delay: -1.4s; }
+    .path-node:not(:disabled):hover { transform: translateY(-4px) scale(1.04); }
+
+    .path-node.retry { background: linear-gradient(135deg, var(--gold), #ef7e44); }
+    .path-node.done { background: linear-gradient(135deg, #18b66a, #0e8a54); }
+    .path-node.locked { background: linear-gradient(135deg, #a8b3bd, #798591); box-shadow: inset 0 -7px 0 rgba(0, 0, 0, .12); }
+    .path-label {
+      min-width: 0;
+      max-width: 170px;
+      padding: 10px 12px;
+      border-radius: var(--radius);
+      background: color-mix(in srgb, var(--panel), transparent 10%);
+      border: 1px solid color-mix(in srgb, var(--line), transparent 22%);
+      box-shadow: var(--soft-shadow);
+      animation: softIn .35s ease both;
+    }
+    .path-label strong { display: block; font-size: 18px; }
+    .stars { color: #c4cec8; font-size: 16px; letter-spacing: 0; }
+    .stars .filled { color: var(--gold); }
+
+    .reward-node {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 48px;
+      padding: 7px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--panel);
+      box-shadow: var(--soft-shadow);
+      font-weight: 950;
+      animation: rewardPulse 2.2s ease-in-out infinite;
+    }
+
+    .reward-node::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      width: clamp(32px, 6vw, 84px);
+      border-top: 4px dotted color-mix(in srgb, var(--gold), transparent 18%);
+      transform: translateY(-50%);
+    }
+
+    .path-step.left .reward-node::before,
+    .path-step.center .reward-node::before { right: 100%; }
+
+    .path-step.right .reward-node::before { left: 100%; }
+
+    .reward-icon {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .reward-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .reward-text {
+      display: grid;
+      gap: 1px;
+      line-height: 1.05;
+    }
+
+    .reward-text small {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    @keyframes rewardPulse {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-2px) scale(1.03); }
+    }
+
+    @keyframes pathDash { to { stroke-dashoffset: -34; } }
+    @keyframes nodeFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    @keyframes softIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes viewIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .game-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 306px;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .game-card { display: grid; gap: 10px; }
+    .prompt {
+      display: grid;
+      gap: 6px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+    }
+
+    .prompt small {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .prompt strong { font-size: clamp(18px, 2.1vw, 25px); overflow-wrap: anywhere; }
+    .progress { height: 12px; overflow: hidden; border-radius: 999px; background: var(--soft); border: 1px solid var(--line); }
+    .progress span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--green), var(--gold)); transition: width .2s ease; }
+
+    .canvas-wrap {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #dff5ff;
+      box-shadow: var(--soft-shadow);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      min-height: 330px;
+      touch-action: none;
+    }
+
+    .memory-board {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      min-height: 430px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, color-mix(in srgb, var(--panel), white 8%), var(--soft));
+      animation: softIn .32s ease both;
+    }
+
+    .memory-card {
+      min-height: 86px;
+      padding: 10px;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      font-weight: 900;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+      box-shadow: var(--soft-shadow);
+      animation: cardRise .28s ease both;
+    }
+
+    .memory-card.hidden { color: transparent; background: linear-gradient(135deg, var(--purple), var(--blue)); }
+    .memory-card.hidden::before { content: attr(data-icon); color: #fff; font-size: 30px; }
+    .memory-card.matched { background: color-mix(in srgb, var(--green), white 82%); color: var(--ink); opacity: .72; transform: scale(.96); }
+
+    @keyframes cardRise {
+      from { opacity: 0; transform: translateY(6px) rotateX(10deg); }
+      to { opacity: 1; transform: translateY(0) rotateX(0); }
+    }
+
+    .hud-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+    .hud-cell { padding: 10px; border-radius: var(--radius); background: var(--soft); border: 1px solid var(--line); }
+    .hud-cell b { display: block; font-size: 24px; line-height: 1; }
+    .hud-cell span { color: var(--muted); font-size: 12px; font-weight: 850; }
+    .result { display: none; margin-top: 10px; padding: 14px; border-radius: var(--radius); background: var(--soft); border: 1px solid var(--line); }
+    .result.show { display: grid; gap: 10px; }
+
+    .shop-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 10px;
+    }
+
+    .shop-item {
+      display: grid;
+      gap: 10px;
+      padding: 13px;
+    }
+
+    .shop-emoji { font-size: 38px; line-height: 1; }
+    .avatar-preview { display: grid; place-items: center; min-height: 230px; background: var(--soft); border: 1px dashed var(--line); border-radius: var(--radius); }
+    .emoji-avatar {
+      position: relative;
+      width: var(--size, 94px);
+      height: calc(var(--size, 94px) * 1.08);
+      filter: drop-shadow(0 12px 16px rgba(0, 0, 0, .16));
+    }
+
+    .emoji-avatar .face {
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      transform: translateX(-50%);
+      font-size: var(--size, 94px);
+      line-height: 1;
+    }
+
+    .emoji-avatar .hat {
+      position: absolute;
+      left: 50%;
+      top: -10%;
+      transform: translateX(-50%) rotate(-6deg);
+      font-size: calc(var(--size, 94px) * .46);
+      z-index: 2;
+    }
+
+    .emoji-avatar .item {
+      position: absolute;
+      right: -8%;
+      bottom: 4%;
+      transform: rotate(10deg);
+      font-size: calc(var(--size, 94px) * .38);
+      z-index: 3;
+    }
+
+    .form-grid { display: grid; gap: 10px; }
+    .field { display: grid; gap: 6px; }
+    .field label { color: var(--muted); font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; }
+    .field input, .field select {
+      min-height: 42px;
+      width: 100%;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      color: var(--ink);
+      font-weight: 800;
+    }
+
+    .split { display: grid; grid-template-columns: 292px minmax(0, 1fr); gap: 14px; }
+    .seg { display: flex; gap: 6px; padding: 5px; border-radius: var(--radius); background: var(--soft); border: 1px solid var(--line); }
+    .seg button { flex: 1; min-height: 36px; border-radius: 6px; background: transparent; color: var(--muted); font-weight: 900; }
+    .seg button.active { color: var(--ink); background: var(--panel); box-shadow: var(--soft-shadow); }
+    .kahoot-pane { display: none; }
+    .kahoot-pane.active { display: block; }
+    .room-code { display: inline-flex; align-items: center; min-height: 48px; padding: 0 14px; border-radius: var(--radius); border: 1px dashed var(--line); background: var(--soft); font-size: 24px; font-weight: 950; letter-spacing: .08em; }
+    .players { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .player-pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 10px; min-width: 0; }
+    .kahoot-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
+    .answer-btn { min-height: 78px; padding: 12px; color: #fff; line-height: 1.25; overflow-wrap: anywhere; box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .16); }
+    .answer-btn:nth-child(1) { background: #e74856; }
+    .answer-btn:nth-child(2) { background: #2589d8; }
+    .answer-btn:nth-child(3) { background: #e4a11b; }
+    .answer-btn:nth-child(4) { background: #31a85b; }
+    .scoreboard { display: grid; gap: 7px; margin-top: 10px; }
+    .score-row { display: flex; justify-content: space-between; gap: 10px; padding: 8px 10px; box-shadow: none; }
+    .score-row strong { overflow-wrap: anywhere; }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: none;
+      place-items: center;
+      padding: 18px;
+      background: rgba(7, 13, 20, .42);
+      backdrop-filter: blur(8px);
+    }
+
+    .modal.show { display: grid; }
+    .modal-card { width: 92vw; max-width: 560px; max-height: calc(100dvh - 36px); overflow: auto; padding: 18px; display: grid; gap: 14px; }
+    .choice-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(78px, 1fr)); gap: 8px; }
+    .choice {
+      display: grid;
+      place-items: center;
+      min-height: 64px;
+      border-radius: var(--radius);
+      background: var(--soft);
+      border: 2px solid transparent;
+      font-size: 31px;
+    }
+
+    .choice.active { border-color: var(--green); background: color-mix(in srgb, var(--green), white 88%); }
+    body[data-theme="dark"] .choice.active { background: color-mix(in srgb, var(--green), black 72%); }
+    .settings-menu {
+      position: fixed;
+      z-index: 80;
+      top: 64px;
+      right: 14px;
+      display: none;
+      width: min(330px, calc(100vw - 28px));
+      padding: 14px;
+    }
+
+    .settings-menu.show { display: grid; gap: 12px; }
+    .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; }
+    .toggle {
+      position: relative;
+      width: 54px;
+      height: 30px;
+      border-radius: 999px;
+      background: #a8b3bd;
+      border: 1px solid var(--line);
+      padding: 3px;
+    }
+
+    .toggle span { display: block; width: 22px; height: 22px; border-radius: 50%; background: #fff; transition: transform .18s ease; }
+    .toggle.on { background: var(--green); }
+    .toggle.on span { transform: translateX(24px); }
+    .toast { position: fixed; right: 18px; bottom: 18px; z-index: 120; display: grid; gap: 8px; width: min(360px, calc(100vw - 36px)); pointer-events: none; }
+    .toast-item { padding: 12px 14px; border-radius: var(--radius); background: rgba(23, 33, 43, .95); color: #fff; box-shadow: var(--shadow); font-weight: 800; }
+
+    @media (max-width: 980px) {
+      .game-layout, .split { grid-template-columns: 1fr; }
+      canvas { min-height: 300px; }
+    }
+
+    @media (max-width: 660px) {
+      .topbar { min-height: 58px; padding-inline: 10px; }
+      .brand strong { display: none; }
+      .shell { padding: 12px 10px 22px; gap: 12px; }
+      .view { padding: 13px; }
+      .view-head { display: grid; }
+      .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .shell { padding-bottom: 104px; }
+      .nav-btn { min-height: 55px; font-size: 11px; padding: 0 6px; }
+      .top-wallet { display: none; }
+      .profile-top strong { display: none; }
+      .logo-img { width: 72px; height: 72px; }
+      .logo-text-img { width: 220px; max-height: 74px; }
+      .path-step { min-height: 112px; grid-template-columns: minmax(0, 1fr) 86px minmax(0, 1fr); gap: 8px; }
+      .path-node { width: 78px; height: 78px; font-size: 26px; }
+      .path-label { max-width: min(132px, calc(50vw - 58px)); padding: 8px; }
+      .path-label strong { font-size: 14px; }
+      .reward-node { min-height: 42px; padding: 6px 8px; gap: 5px; }
+      .reward-icon { width: 28px; height: 28px; font-size: 22px; }
+      .reward-text { font-size: 12px; }
+      .reward-node::before { width: 22px; border-top-width: 3px; }
+      .wallet { grid-template-columns: 1fr; }
+      .kahoot-options, .memory-board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .choice-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      canvas { min-height: 260px; aspect-ratio: 4 / 3; }
+      .watermark { top: 62px; font-size: 9px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="loading-screen" id="loadingScreen">
+    <div class="loading-stack">
+      <img src="loading.png" alt="Romulingo loading" onerror="this.onerror=null; this.src='romulingo_loading.png'; this.onerror=()=>{this.style.display='none'; this.nextElementSibling.style.display='grid';};">
+      <div class="loading-fallback">romulingo</div>
+      <div class="loader-ring" aria-hidden="true"></div>
+    </div>
+  </div>
+
+  <div class="topbar">
+    <div class="brand">
+      <img class="logo-img" src="romulingo.png" alt="" onload="this.style.display='block'; this.nextElementSibling.style.display='none';" onerror="this.style.display='none';">
+      <div class="brand-mark">R</div>
+      <img class="logo-text-img" src="romulingo_text.png" alt="Romulingo" onload="this.nextElementSibling.style.display='none';" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+      <span class="brand-fallback">Romulingo</span>
+    </div>
+    <div class="top-actions">
+      <div class="top-wallet"><span>🪙</span><b id="topCoinCount">0</b></div>
+      <div class="top-wallet"><span>💎</span><b id="topGemCount">0</b></div>
+      <button class="profile-top" id="profileTop" type="button"><span id="topProfileAvatar"></span><strong id="topProfileName">RG-Discipulus</strong></button>
+      <button class="tiny-btn" id="langTop" type="button">EN</button>
+      <button class="tiny-btn" id="settingsBtn" type="button">⚙</button>
+    </div>
+  </div>
+  <div class="watermark">Prototype testing</div>
+  <div class="toast" id="toast"></div>
+
+  <div class="settings-menu" id="settingsMenu">
+    <h3 data-i18n="settings">Settings</h3>
+    <div class="switch-row">
+      <strong data-i18n="language">Language</strong>
+      <button class="tiny-btn" id="languageSwitch" type="button">EN</button>
+    </div>
+    <div class="switch-row">
+      <strong data-i18n="sfx">SFX</strong>
+      <button class="toggle" id="sfxToggle" type="button"><span></span></button>
+    </div>
+    <div class="switch-row">
+      <strong data-i18n="darkMode">Dark mode</strong>
+      <button class="toggle" id="themeToggle" type="button"><span></span></button>
+    </div>
+  </div>
+
+  <div class="shell">
+    <aside class="side">
+      <section class="panel profile-card">
+        <div class="profile-line">
+          <div id="sideAvatar"></div>
+          <div>
+            <strong id="sideName">RG-Discipulus</strong>
+            <div class="muted" id="sideProgress">0 / 41</div>
+          </div>
+        </div>
+        <div class="wallet">
+          <div class="wallet-chip"><span>🪙</span><b id="coinCount">0</b></div>
+          <div class="wallet-chip"><span>💎</span><b id="gemCount">0</b></div>
+        </div>
+      </section>
+      <nav class="nav">
+        <button class="nav-btn active" data-view="path" type="button">🗺 <span data-i18n="path">Path</span></button>
+        <button class="nav-btn" data-view="games" type="button">🎮 <span data-i18n="games">Games</span></button>
+        <button class="nav-btn" data-view="shop" type="button">🛒 <span data-i18n="shop">Shop</span></button>
+        <button class="nav-btn" data-view="kahoot" type="button">📡 <span data-i18n="kahoot">Kahoot</span></button>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <section class="view active" id="pathView">
+        <div class="view-head">
+          <h1 class="hero-logo"><img src="romulingo_text.png" alt="Romulingo" onload="this.nextElementSibling.style.display='none';" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';"><span>Romulingo</span></h1>
+          <button class="ghost" id="resetBtn" type="button">↺ <span data-i18n="reset">Reset</span></button>
+        </div>
+        <div class="summary" id="pathSummary"></div>
+        <div class="path" id="lessonPath"></div>
+      </section>
+
+      <section class="view" id="gamesView">
+        <div class="view-head">
+          <h2 data-i18n="games">Games</h2>
+          <div class="toolbar">
+            <select id="lessonSelect"></select>
+            <button class="primary" id="startSelectedGame" type="button">▶ <span data-i18n="start">Start</span></button>
+          </div>
+        </div>
+        <div class="game-layout">
+          <section class="game-card">
+            <div class="prompt">
+              <small id="gameMeta">Romulingo</small>
+              <strong id="gamePrompt">...</strong>
+            </div>
+            <div class="progress"><span id="gameProgress"></span></div>
+            <div class="canvas-wrap" id="canvasWrap"><canvas id="gameCanvas" width="960" height="540"></canvas></div>
+            <div class="memory-board" id="memoryBoard" hidden></div>
+            <div class="result" id="resultBox"></div>
+          </section>
+          <aside class="panel">
+            <h3 id="hudTitle">Flappy</h3>
+            <div class="hud-grid">
+              <div class="hud-cell"><b id="hudScore">0</b><span data-i18n="score">Score</span></div>
+              <div class="hud-cell"><b id="hudHearts">3</b><span data-i18n="hearts">Hearts</span></div>
+              <div class="hud-cell"><b id="hudStars">0</b><span data-i18n="stars">Stars</span></div>
+              <div class="hud-cell"><b id="hudReward">0</b><span>🪙</span></div>
+            </div>
+            <div class="toolbar" style="margin-top: 12px;">
+              <button class="ghost" id="flapBtn" type="button">⬆️ <span data-i18n="flap">Flap</span></button>
+              <button class="danger" id="endGameBtn" type="button">■ <span data-i18n="end">End</span></button>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="view" id="shopView">
+        <div class="view-head"><h2 data-i18n="shop">Shop</h2></div>
+        <div class="split">
+          <aside class="panel">
+            <h3 data-i18n="avatar">Avatar</h3>
+            <div class="avatar-preview" id="shopAvatar"></div>
+          </aside>
+          <div class="shop-grid" id="shopGrid"></div>
+        </div>
+      </section>
+
+      <section class="view" id="avatarView">
+        <div class="view-head"><h2 data-i18n="avatar">Avatar</h2></div>
+        <div class="split">
+          <aside class="panel">
+            <div class="avatar-preview" id="profileAvatar"></div>
+          </aside>
+          <section class="panel form-grid">
+            <div class="field">
+              <label for="nameInput" data-i18n="username">Username</label>
+              <input id="nameInput" maxlength="18" placeholder="RG-Discipulus">
+            </div>
+            <button class="primary" id="saveNameBtn" type="button">💾 <span data-i18n="save">Save</span></button>
+            <div class="scoreboard" id="profileLessons"></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="kahootView">
+        <div class="view-head"><h2 data-i18n="kahoot">Kahoot</h2></div>
+        <div class="split">
+          <aside class="panel form-grid">
+            <div class="seg">
+              <button class="active" data-kahoot-tab="host" type="button" data-i18n="host">Host</button>
+              <button data-kahoot-tab="join" type="button" data-i18n="join">Join</button>
+            </div>
+            <div class="avatar-preview" id="kahootAvatar" style="min-height: 180px;"></div>
+            <button class="ghost" id="avatarFromKahoot" type="button">🙂 <span data-i18n="avatar">Avatar</span></button>
+          </aside>
+          <div>
+            <section class="kahoot-pane active" id="hostPane">
+              <div class="panel form-grid">
+                <div class="field">
+                  <label for="kahootLessonSelect" data-i18n="lesson">Lesson</label>
+                  <select id="kahootLessonSelect"></select>
+                </div>
+                <div class="toolbar">
+                  <button class="primary" id="createRoomBtn" type="button">📡 <span data-i18n="createRoom">Create room</span></button>
+                  <button class="ghost" id="startKahootBtn" type="button">▶ <span data-i18n="start">Start</span></button>
+                  <button class="ghost" id="nextQuestionBtn" type="button">⏭ <span data-i18n="next">Next</span></button>
+                </div>
+                <div class="room-code" id="roomCode">-------</div>
+              </div>
+              <div class="panel" style="margin-top: 12px;">
+                <h3 data-i18n="players">Players</h3>
+                <div class="players" id="hostPlayers"></div>
+              </div>
+              <div class="panel" style="margin-top: 12px;">
+                <h3 data-i18n="question">Question</h3>
+                <div id="hostQuestionBoard"></div>
+                <div class="scoreboard" id="hostScoreboard"></div>
+              </div>
+            </section>
+            <section class="kahoot-pane" id="joinPane">
+              <div class="panel form-grid">
+                <div class="field">
+                  <label for="joinCode" data-i18n="roomCode">Room code</label>
+                  <input id="joinCode" inputmode="numeric" maxlength="7" pattern="[0-9]{7}" placeholder="1234567">
+                </div>
+                <button class="primary" id="joinRoomBtn" type="button">↪ <span data-i18n="join">Join</span></button>
+                <div class="muted" id="joinStatus"></div>
+              </div>
+              <div class="panel" style="margin-top: 12px;">
+                <h3 data-i18n="question">Question</h3>
+                <div id="joinQuestionBoard"></div>
+                <div class="scoreboard" id="joinScoreboard"></div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal" id="startModal">
+    <div class="modal-card">
+      <h2 data-i18n="startTitle">Choose your name</h2>
+      <div class="field">
+        <label for="startName" data-i18n="username">Username</label>
+        <input id="startName" maxlength="18" placeholder="RG-Discipulus">
+      </div>
+      <h3 data-i18n="face">Face</h3>
+      <div class="choice-grid" id="startFaces"></div>
+      <h3 data-i18n="hat">Hat</h3>
+      <div class="choice-grid" id="startHats"></div>
+      <h3 data-i18n="item">Item</h3>
+      <div class="choice-grid" id="startItems"></div>
+      <button class="primary" id="startProfileBtn" type="button">▶ <span data-i18n="start">Start</span></button>
+    </div>
+  </div>
+
+  <script>
+    const VOCABULARY = [{"lesson":1,"latin":"puella","meaning":"das Mädchen, die Freundin","kind":"word","id":1},{"lesson":1,"latin":"serva","meaning":"die Sklavin, die Dienerin","kind":"word","id":2},{"lesson":1,"latin":"silva","meaning":"der Wald","kind":"word","id":3},{"lesson":1,"latin":"via","meaning":"der Weg, die Straße","kind":"word","id":4},{"lesson":1,"latin":"vīlla","meaning":"das Haus, das Landhaus","kind":"word","id":5},{"lesson":1,"latin":"avus","meaning":"der Großvater","kind":"word","id":6},{"lesson":1,"latin":"campus","meaning":"das Feld, der freie Platz","kind":"word","id":7},{"lesson":1,"latin":"equus","meaning":"das Pferd","kind":"word","id":8},{"lesson":1,"latin":"mūrus","meaning":"die Mauer","kind":"word","id":9},{"lesson":1,"latin":"servus","meaning":"der Sklave, der Diener","kind":"word","id":10},{"lesson":1,"latin":"vīcus","meaning":"das Dorf, die Gasse","kind":"word","id":11},{"lesson":1,"latin":"et","meaning":"und, auch","kind":"word","id":12},{"lesson":2,"latin":"esse","meaning":"sein, sich befinden","kind":"word","id":13},{"lesson":2,"latin":"est","meaning":"er (sie, es) ist","kind":"word","id":14},{"lesson":2,"latin":"sunt","meaning":"sie sind","kind":"word","id":15},{"lesson":2,"latin":"rīdēre","meaning":"lachen, auslachen","kind":"word","id":16},{"lesson":2,"latin":"nōn","meaning":"nicht","kind":"word","id":17},{"lesson":2,"latin":"cūr?","meaning":"warum?","kind":"word","id":18},{"lesson":2,"latin":"pārēre","meaning":"gehorchen","kind":"word","id":19},{"lesson":2,"latin":"monēre","meaning":"mahnen, ermahnen","kind":"word","id":20},{"lesson":2,"latin":"dēbēre","meaning":"müssen, sollen","kind":"word","id":21},{"lesson":2,"latin":"quid?","meaning":"was?","kind":"word","id":22},{"lesson":2,"latin":"timēre","meaning":"fürchten, Angst haben","kind":"word","id":23},{"lesson":2,"latin":"oculus","meaning":"das Auge","kind":"word","id":24},{"lesson":2,"latin":"dolēre","meaning":"schmerzen, wehtun","kind":"word","id":25},{"lesson":2,"latin":"Homilia serva","meaning":"die Sklavin Homilia","kind":"phrase","id":26},{"lesson":2,"latin":"nunc Adv.","meaning":"nun, jetzt","kind":"word","id":27},{"lesson":2,"latin":"tacēre","meaning":"schweigen, verschweigen","kind":"word","id":28},{"lesson":3,"latin":"hīc Adv.","meaning":"hier","kind":"word","id":29},{"lesson":3,"latin":"dominus","meaning":"der Herr","kind":"word","id":30},{"lesson":3,"latin":"ibī Adv.","meaning":"dort","kind":"word","id":31},{"lesson":3,"latin":"sedēre","meaning":"sitzen","kind":"word","id":32},{"lesson":3,"latin":"sed","meaning":"aber, sondern","kind":"word","id":33},{"lesson":3,"latin":"respondēre","meaning":"antworten","kind":"word","id":34},{"lesson":3,"latin":"quis?","meaning":"wer?","kind":"word","id":35},{"lesson":3,"latin":"augēre","meaning":"vergrößern, vermehren","kind":"word","id":36},{"lesson":3,"latin":"neque","meaning":"und nicht, auch nicht","kind":"word","id":37},{"lesson":3,"latin":"neque ... neque","meaning":"weder ... noch","kind":"word","id":38},{"lesson":3,"latin":"terrēre","meaning":"erschrecken","kind":"word","id":39},{"lesson":3,"latin":"lingua","meaning":"die Sprache, die Rede","kind":"word","id":40},{"lesson":3,"latin":"nam","meaning":"denn, nämlich","kind":"word","id":41},{"lesson":4,"latin":"gaudēre, gaudeō","meaning":"sich freuen","kind":"word","id":42},{"lesson":4,"latin":"amīcus","meaning":"der Freund","kind":"word","id":43},{"lesson":4,"latin":"docēre, doceō","meaning":"lehren, unterrichten","kind":"word","id":44},{"lesson":4,"latin":"studēre, studeō","meaning":"sich bemühen, studieren","kind":"word","id":45},{"lesson":4,"latin":"tabula","meaning":"die (Schreib-)Tafel, das Gemälde","kind":"word","id":46},{"lesson":4,"latin":"tenēre, teneō","meaning":"halten, festhalten, besitzen","kind":"word","id":47},{"lesson":4,"latin":"praebēre, praebeō","meaning":"geben, hinhalten","kind":"word","id":48},{"lesson":4,"latin":"iam Adv.","meaning":"schon, bereits; nun","kind":"word","id":49},{"lesson":4,"latin":"prīmō Adv.","meaning":"zuerst","kind":"word","id":50},{"lesson":4,"latin":"tum Adv.","meaning":"da, dann, darauf, damals","kind":"word","id":51},{"lesson":4,"latin":"rēctē Adv.","meaning":"richtig, zu Recht","kind":"word","id":52},{"lesson":4,"latin":"nōn iam","meaning":"nicht mehr","kind":"word","id":53},{"lesson":4,"latin":"saepe Adv.","meaning":"oft","kind":"word","id":54},{"lesson":4,"latin":"numquam Adv.","meaning":"niemals","kind":"word","id":55},{"lesson":5,"latin":"sonus","meaning":"der Ton, der Klang, das Geräusch","kind":"word","id":56},{"lesson":5,"latin":"latēre, lateō","meaning":"verborgen sein","kind":"word","id":57},{"lesson":5,"latin":"subitō Adv.","meaning":"plötzlich","kind":"word","id":58},{"lesson":5,"latin":"gladius","meaning":"das Schwert","kind":"word","id":59},{"lesson":5,"latin":"torquēre, torqueō","meaning":"drehen; quälen","kind":"word","id":60},{"lesson":5,"latin":"scelerātus","meaning":"der Verbrecher","kind":"word","id":61},{"lesson":5,"latin":"flēre, fleō","meaning":"weinen, beweinen","kind":"word","id":62},{"lesson":5,"latin":"placēre, placeō","meaning":"gefallen","kind":"word","id":63},{"lesson":5,"latin":"cui?","meaning":"wem?","kind":"word","id":64},{"lesson":5,"latin":"statim Adv.","meaning":"sofort","kind":"word","id":65},{"lesson":5,"latin":"etiam","meaning":"auch, sogar","kind":"word","id":66},{"lesson":5,"latin":"iterum Adv.","meaning":"wiederum, zum zweiten Mal","kind":"word","id":67},{"lesson":5,"latin":"itaque","meaning":"deshalb","kind":"word","id":68},{"lesson":5,"latin":"tantum Adv. (nachgestellt)","meaning":"nur","kind":"word","id":69},{"lesson":5,"latin":"Lingua tantum servōs terret.","meaning":"Nur die Sprache erschreckt die Sklaven.","kind":"phrase","id":70},{"lesson":6,"latin":"cibus","meaning":"die Nahrung, die Speise, das Futter","kind":"word","id":71},{"lesson":6,"latin":"habēre, habeō","meaning":"haben, halten","kind":"word","id":72},{"lesson":6,"latin":"complēre, compleō","meaning":"anfüllen, auffüllen","kind":"word","id":73},{"lesson":6,"latin":"cōpia","meaning":"die Menge, der Vorrat","kind":"word","id":74},{"lesson":6,"latin":"aqua","meaning":"das Wasser","kind":"word","id":75},{"lesson":6,"latin":"ventus","meaning":"der Wind","kind":"word","id":76},{"lesson":6,"latin":"dēlēre, dēleō","meaning":"zerstören, vernichten","kind":"word","id":77},{"lesson":6,"latin":"adhūc Adv.","meaning":"bis jetzt, noch","kind":"word","id":78},{"lesson":6,"latin":"populus","meaning":"das Volk","kind":"word","id":79},{"lesson":6,"latin":"Aeolus","meaning":"Äolus (der Gott der Winde)","kind":"word","id":80},{"lesson":6,"latin":"deus","meaning":"der Gott, die Gottheit","kind":"word","id":81},{"lesson":6,"latin":"profectō Adv.","meaning":"sicherlich, tatsächlich","kind":"word","id":82},{"lesson":6,"latin":"grātia","meaning":"der Dank","kind":"word","id":83},{"lesson":6,"latin":"grātiam habēre","meaning":"danken, dankbar sein","kind":"word","id":84},{"lesson":6,"latin":"semper Adv.","meaning":"immer","kind":"word","id":85},{"lesson":7,"latin":"valēre, valeō","meaning":"gesund sein, stark sein, Einfluss haben","kind":"word","id":86},{"lesson":7,"latin":"valē! valēte!","meaning":"leb wohl! lebt wohl!","kind":"word","id":87},{"lesson":7,"latin":"lacrima","meaning":"die Träne","kind":"word","id":88},{"lesson":7,"latin":"vidēre, videō","meaning":"sehen","kind":"word","id":89},{"lesson":7,"latin":"movēre, moveō","meaning":"bewegen, beeindrucken","kind":"word","id":90},{"lesson":7,"latin":"tandem Adv.","meaning":"endlich","kind":"word","id":91},{"lesson":7,"latin":"mox Adv.","meaning":"bald","kind":"word","id":92},{"lesson":7,"latin":"turba","meaning":"die (Menschen-)Menge","kind":"word","id":93},{"lesson":7,"latin":"patēre, pateō","meaning":"offenstehen","kind":"word","id":94},{"lesson":7,"latin":"īnsula","meaning":"die Insel; der Wohnblock","kind":"word","id":95},{"lesson":7,"latin":"Rōma","meaning":"Rom","kind":"word","id":96},{"lesson":7,"latin":"amīca","meaning":"die Freundin","kind":"word","id":97},{"lesson":7,"latin":"laetitia","meaning":"die Freude","kind":"word","id":98},{"lesson":8,"latin":"domina","meaning":"die Herrin, die Dame","kind":"word","id":99},{"lesson":8,"latin":"rogāre, rogō","meaning":"fragen, bitten","kind":"word","id":100},{"lesson":8,"latin":"amāre, amō","meaning":"lieben","kind":"word","id":101},{"lesson":8,"latin":"parāre, parō","meaning":"(vor)bereiten, vorhaben (m. Inf.); erwerben","kind":"word","id":102},{"lesson":8,"latin":"labōrāre, labōrō","meaning":"arbeiten, sich anstrengen","kind":"word","id":103},{"lesson":8,"latin":"vocāre, vocō","meaning":"nennen, benennen, rufen","kind":"word","id":104},{"lesson":8,"latin":"properāre, properō","meaning":"eilen, sich beeilen","kind":"word","id":105},{"lesson":8,"latin":"cēna","meaning":"die Mahlzeit, das Essen","kind":"word","id":106},{"lesson":8,"latin":"fīlia","meaning":"die Tochter","kind":"word","id":107},{"lesson":8,"latin":"intrāre, intrō","meaning":"betreten, eintreten","kind":"word","id":108},{"lesson":8,"latin":"mēnsa","meaning":"der (Ess-)Tisch","kind":"word","id":109},{"lesson":8,"latin":"ōrnāre, ōrnō","meaning":"ausstatten, schmücken","kind":"word","id":110},{"lesson":8,"latin":"sīc Adv.","meaning":"so","kind":"word","id":111},{"lesson":8,"latin":"dēlectāre, dēlectō","meaning":"erfreuen, unterhalten","kind":"word","id":112},{"lesson":9,"latin":"familia","meaning":"die Familie","kind":"word","id":113},{"lesson":9,"latin":"bene Adv.","meaning":"gut","kind":"word","id":114},{"lesson":9,"latin":"cēnāre, cēnō","meaning":"essen","kind":"word","id":115},{"lesson":9,"latin":"spectāre, spectō","meaning":"betrachten, anschauen, hinsehen","kind":"word","id":116},{"lesson":9,"latin":"unde?","meaning":"woher?","kind":"word","id":117},{"lesson":9,"latin":"diū Adv.","meaning":"lange (Zeit)","kind":"word","id":118},{"lesson":9,"latin":"dubitāre, dubitō","meaning":"zweifeln; zögern (m. Inf.)","kind":"word","id":119},{"lesson":9,"latin":"Rōmānus","meaning":"der Römer, der Einwohner Roms","kind":"word","id":120},{"lesson":9,"latin":"pūgna","meaning":"der Kampf","kind":"word","id":121},{"lesson":9,"latin":"pūgnāre, pūgnō","meaning":"kämpfen","kind":"word","id":122},{"lesson":9,"latin":"superāre, superō","meaning":"besiegen, überwinden, übertreffen","kind":"word","id":123},{"lesson":9,"latin":"Syria","meaning":"Syrien","kind":"word","id":124},{"lesson":9,"latin":"patria","meaning":"die Heimat","kind":"word","id":125},{"lesson":9,"latin":"prōvincia","meaning":"die Provinz","kind":"word","id":126},{"lesson":9,"latin":"Eurōpa","meaning":"Europa","kind":"word","id":127},{"lesson":9,"latin":"Asia","meaning":"Asien","kind":"word","id":128},{"lesson":9,"latin":"Āfrica","meaning":"Afrika","kind":"word","id":129},{"lesson":9,"latin":"dolus","meaning":"die List, die Täuschung","kind":"word","id":130},{"lesson":9,"latin":"iniūria","meaning":"das Unrecht, die Beleidigung","kind":"word","id":131},{"lesson":9,"latin":"captīvus","meaning":"der Kriegsgefangene","kind":"word","id":132},{"lesson":9,"latin":"fīlius","meaning":"der Sohn","kind":"word","id":133},{"lesson":10,"latin":"exspectāre, exspectō","meaning":"warten (auf), erwarten","kind":"word","id":134},{"lesson":10,"latin":"venīre, veniō","meaning":"kommen","kind":"word","id":135},{"lesson":10,"latin":"audīre, audiō","meaning":"hören","kind":"word","id":136},{"lesson":10,"latin":"nihil","meaning":"nichts","kind":"word","id":137},{"lesson":10,"latin":"lūdus","meaning":"das Spiel; die Schule","kind":"word","id":138},{"lesson":10,"latin":"scīre, sciō","meaning":"wissen, kennen, verstehen","kind":"word","id":139},{"lesson":10,"latin":"Crēta","meaning":"Kreta (Insel im Mittelmeer)","kind":"word","id":140},{"lesson":10,"latin":"dēsīderāre, dēsīderō","meaning":"sich sehnen nach, vermissen","kind":"word","id":141},{"lesson":10,"latin":"patriam dēsīderāre","meaning":"sich nach der Heimat sehnen","kind":"phrase","id":142},{"lesson":10,"latin":"ubī?","meaning":"wo?","kind":"word","id":143},{"lesson":10,"latin":"nescīre, nesciō","meaning":"nicht wissen, nicht kennen, nicht verstehen","kind":"word","id":144},{"lesson":10,"latin":"Sicilia","meaning":"Sizilien (Insel im Mittelmeer)","kind":"word","id":145},{"lesson":10,"latin":"Aetna","meaning":"der Ätna (Vulkan auf Sizilien)","kind":"word","id":146},{"lesson":10,"latin":"Vulcānus","meaning":"Vulkan(us) (Gott des Feuers)","kind":"word","id":147},{"lesson":10,"latin":"habitāre, habitō","meaning":"wohnen, bewohnen","kind":"word","id":148},{"lesson":11,"latin":"discipulus","meaning":"der Schüler","kind":"word","id":149},{"lesson":11,"latin":"libenter Adv.","meaning":"gerne","kind":"word","id":150},{"lesson":11,"latin":"ingenium","meaning":"die Begabung, das Talent, der Verstand","kind":"word","id":151},{"lesson":11,"latin":"cōnsilium","meaning":"die Beratung, der Beschluss, der Plan, der Rat","kind":"word","id":152},{"lesson":11,"latin":"Capitōlium","meaning":"das Kapitol (bedeutendster Hügel Roms)","kind":"word","id":153},{"lesson":11,"latin":"forum","meaning":"das Forum, der Marktplatz","kind":"word","id":154},{"lesson":11,"latin":"aedificium","meaning":"das Gebäude","kind":"word","id":155},{"lesson":11,"latin":"cūria","meaning":"die Kurie (das Sitzungsgebäude des Senats)","kind":"word","id":156},{"lesson":11,"latin":"templum","meaning":"der Tempel","kind":"word","id":157},{"lesson":11,"latin":"dea","meaning":"die Göttin","kind":"word","id":158},{"lesson":11,"latin":"Sāturnus","meaning":"Saturn (der Gott der Saat und der Zeit)","kind":"word","id":159},{"lesson":11,"latin":"Concordia","meaning":"Concordia (die Göttin der Eintracht)","kind":"word","id":160},{"lesson":11,"latin":"aedificāre, aedificō","meaning":"bauen","kind":"word","id":161},{"lesson":11,"latin":"porta","meaning":"das Tor","kind":"word","id":162},{"lesson":11,"latin":"beneficium","meaning":"die Wohltat","kind":"word","id":163},{"lesson":11,"latin":"frūmentum","meaning":"das Getreide","kind":"word","id":164},{"lesson":11,"latin":"dōnum","meaning":"das Geschenk","kind":"word","id":165},{"lesson":11,"latin":"verbum","meaning":"das Wort, die Äußerung","kind":"word","id":166},{"lesson":12,"latin":"basilica","meaning":"die Markthalle, die Gerichtshalle","kind":"word","id":167},{"lesson":12,"latin":"ad Präp. m. Akk.","meaning":"zu, bei, nach, an","kind":"word","id":168},{"lesson":12,"latin":"ad basilicam esse","meaning":"bei der Markthalle sein","kind":"phrase","id":169},{"lesson":12,"latin":"ad basilicam properāre","meaning":"zu der Markthalle eilen","kind":"phrase","id":170},{"lesson":12,"latin":"ante Präp. m. Akk.","meaning":"vor","kind":"word","id":171},{"lesson":12,"latin":"ante vīllam; ante cēnam","meaning":"vor dem Landhaus; vor dem Essen","kind":"phrase","id":172},{"lesson":12,"latin":"umbra","meaning":"der Schatten","kind":"word","id":173},{"lesson":12,"latin":"post Präp. m. Akk.","meaning":"hinter, nach","kind":"word","id":174},{"lesson":12,"latin":"post vīllam; post cēnam","meaning":"hinter dem Landhaus; nach dem Essen","kind":"phrase","id":175},{"lesson":12,"latin":"ōrnāmentum","meaning":"der Schmuck, das Schmuckstück","kind":"word","id":176},{"lesson":12,"latin":"cum Präp. m. Abl.","meaning":"mit, zusammen mit","kind":"word","id":177},{"lesson":12,"latin":"quīnque indekl.","meaning":"fünf","kind":"word","id":178},{"lesson":12,"latin":"septem indekl.","meaning":"sieben","kind":"word","id":179},{"lesson":12,"latin":"probāre, probō","meaning":"prüfen, beweisen, für gut befinden","kind":"word","id":180},{"lesson":12,"latin":"pretium","meaning":"der Preis, der Wert","kind":"word","id":181},{"lesson":12,"latin":"indicāre, indicō","meaning":"anzeigen, melden","kind":"word","id":182},{"lesson":12,"latin":"sine Präp. m. Abl.","meaning":"ohne","kind":"word","id":183},{"lesson":12,"latin":"sine amīcō","meaning":"ohne den Freund","kind":"phrase","id":184},{"lesson":12,"latin":"ē / ex Präp. m. Abl.","meaning":"aus, von ... her","kind":"word","id":185},{"lesson":12,"latin":"ē patriā; ex Āfricā","meaning":"aus der Heimat; aus Afrika","kind":"phrase","id":186},{"lesson":12,"latin":"in Präp. m. Abl.","meaning":"in, an, auf, bei (wo?)","kind":"word","id":187},{"lesson":12,"latin":"in aquā","meaning":"im Wasser","kind":"phrase","id":188},{"lesson":12,"latin":"manēre, maneō","meaning":"bleiben, (er)warten","kind":"word","id":189},{"lesson":12,"latin":"in Präp. m. Akk.","meaning":"in (... hinein), nach (wohin?)","kind":"word","id":190},{"lesson":12,"latin":"in aquam","meaning":"ins Wasser","kind":"phrase","id":191},{"lesson":13,"latin":"ego Nom.","meaning":"ich (betont)","kind":"word","id":192},{"lesson":13,"latin":"tū Nom.","meaning":"du (betont)","kind":"word","id":193},{"lesson":13,"latin":"-ne","meaning":"Partikel im dir. Fragesatz (unübersetzt)","kind":"word","id":194},{"lesson":13,"latin":"Vidēsne aedificium?","meaning":"Siehst du das Gebäude?","kind":"phrase","id":195},{"lesson":13,"latin":"vōs Nom.","meaning":"ihr (betont)","kind":"word","id":196},{"lesson":13,"latin":"mihi Dat.","meaning":"mir","kind":"word","id":197},{"lesson":13,"latin":"mē Akk.","meaning":"mich","kind":"word","id":198},{"lesson":13,"latin":"tēcum","meaning":"mit dir","kind":"word","id":199},{"lesson":13,"latin":"nōs Nom.","meaning":"wir (betont)","kind":"word","id":200},{"lesson":13,"latin":"vōbīscum","meaning":"mit euch","kind":"word","id":201},{"lesson":13,"latin":"nōs Akk.","meaning":"uns","kind":"word","id":202},{"lesson":13,"latin":"tibi Dat.","meaning":"dir","kind":"word","id":203},{"lesson":13,"latin":"nōbīs Dat.","meaning":"uns","kind":"word","id":204},{"lesson":13,"latin":"vōbīs Dat.","meaning":"euch","kind":"word","id":205},{"lesson":13,"latin":"vōs Akk.","meaning":"euch","kind":"word","id":206},{"lesson":13,"latin":"clāmāre, clāmō","meaning":"laut rufen, schreien","kind":"word","id":207},{"lesson":13,"latin":"errāre, errō","meaning":"umherirren, (sich) irren","kind":"word","id":208},{"lesson":13,"latin":"invenīre, inveniō","meaning":"finden, erfinden","kind":"word","id":209},{"lesson":13,"latin":"tē Akk.","meaning":"dich","kind":"word","id":210},{"lesson":13,"latin":"sine mē","meaning":"ohne mich","kind":"word","id":211},{"lesson":14,"latin":"sex indekl.","meaning":"sechs","kind":"word","id":212},{"lesson":14,"latin":"octō indekl.","meaning":"acht","kind":"word","id":213},{"lesson":14,"latin":"decem indekl.","meaning":"zehn","kind":"word","id":214},{"lesson":14,"latin":"imperium","meaning":"der Befehl, die Herrschaft, das Reich","kind":"word","id":215},{"lesson":14,"latin":"novus, a, um","meaning":"neu, ungewöhnlich","kind":"word","id":216},{"lesson":14,"latin":"-que (angehängt)","meaning":"und","kind":"word","id":217},{"lesson":14,"latin":"servī servaeque","meaning":"Sklaven und Sklavinnen","kind":"phrase","id":218},{"lesson":14,"latin":"multus, a, um","meaning":"viel","kind":"word","id":219},{"lesson":14,"latin":"multī, ae, a","meaning":"viele","kind":"word","id":220},{"lesson":14,"latin":"cūnctī, ae, a","meaning":"alle (zusammen)","kind":"word","id":221},{"lesson":14,"latin":"Rōmānus, a, um","meaning":"römisch","kind":"word","id":222},{"lesson":14,"latin":"bonus, a, um","meaning":"gut, tüchtig","kind":"word","id":223},{"lesson":14,"latin":"magnus, a, um","meaning":"groß, bedeutend","kind":"word","id":224},{"lesson":14,"latin":"ut","meaning":"wie","kind":"word","id":225},{"lesson":14,"latin":"laudāre, laudō","meaning":"loben","kind":"word","id":226},{"lesson":14,"latin":"tuus, a, um","meaning":"dein","kind":"word","id":227},{"lesson":14,"latin":"narrāre, narrō","meaning":"erzählen","kind":"word","id":228},{"lesson":14,"latin":"dē m. Abl.","meaning":"von, von ... her, von ... weg, von ... herab; über","kind":"word","id":229},{"lesson":14,"latin":"dē templō","meaning":"vom Tempel herab","kind":"phrase","id":230},{"lesson":14,"latin":"dē lūdō narrāre","meaning":"vom Spiel / über das Spiel erzählen","kind":"phrase","id":231},{"lesson":14,"latin":"meus, a, um","meaning":"mein","kind":"word","id":232},{"lesson":14,"latin":"parvus, a, um","meaning":"klein, gering","kind":"word","id":233},{"lesson":15,"latin":"vir, virī m","meaning":"der Mann","kind":"word","id":234},{"lesson":15,"latin":"puer, puerī m","meaning":"der Junge, der Bub","kind":"word","id":235},{"lesson":15,"latin":"ager, agrī m","meaning":"der Acker, das Feld, das Gebiet","kind":"word","id":236},{"lesson":15,"latin":"magister, magistrī m","meaning":"der Lehrer, der Meister","kind":"word","id":237},{"lesson":15,"latin":"imperāre, imperō","meaning":"befehlen, herrschen (über)","kind":"word","id":238},{"lesson":15,"latin":"populīs imperāre","meaning":"über (die) Völker herrschen","kind":"phrase","id":239},{"lesson":15,"latin":"niger, nigra, nigrum","meaning":"schwarz, dunkel","kind":"word","id":240},{"lesson":15,"latin":"pulcher, pulchra, pulchrum","meaning":"schön","kind":"word","id":241},{"lesson":15,"latin":"līber, lībera, līberum","meaning":"frei","kind":"word","id":242},{"lesson":15,"latin":"miser, misera, miserum","meaning":"arm, erbärmlich, unglücklich","kind":"word","id":243},{"lesson":15,"latin":"vīta","meaning":"das Leben","kind":"word","id":244},{"lesson":15,"latin":"noster, nostra, nostrum","meaning":"unser","kind":"word","id":245},{"lesson":15,"latin":"vester, vestra, vestrum","meaning":"euer","kind":"word","id":246},{"lesson":16,"latin":"duo, duae, duo","meaning":"zwei","kind":"word","id":247},{"lesson":16,"latin":"carrus","meaning":"der Wagen, der Karren","kind":"word","id":248},{"lesson":16,"latin":"stāre, stō","meaning":"stehen","kind":"word","id":249},{"lesson":16,"latin":"dīcere, dīcō","meaning":"sagen, sprechen","kind":"word","id":250},{"lesson":16,"latin":"nūntius","meaning":"der Bote, die Nachricht","kind":"word","id":251},{"lesson":16,"latin":"mittere, mittō","meaning":"(los)lassen, schicken, werfen","kind":"word","id":252},{"lesson":16,"latin":"scrībere, scrībō","meaning":"schreiben, beschreiben","kind":"word","id":253},{"lesson":16,"latin":"relinquere, relinquō","meaning":"verlassen, zurücklassen","kind":"word","id":254},{"lesson":16,"latin":"dūcere, dūcō","meaning":"führen, ziehen","kind":"word","id":255},{"lesson":16,"latin":"trahere, trahō","meaning":"schleppen, ziehen","kind":"word","id":256},{"lesson":16,"latin":"ostendere, ostendō","meaning":"zeigen, erklären","kind":"word","id":257},{"lesson":16,"latin":"oppidum","meaning":"die Stadt (die Kleinstadt)","kind":"word","id":258},{"lesson":16,"latin":"Vesuvius","meaning":"der Vesuv (Vulkan in Kampanien)","kind":"word","id":259},{"lesson":16,"latin":"ā / ab Präp. m. Abl.","meaning":"von, von ... her","kind":"word","id":260},{"lesson":16,"latin":"ab oppidō / ā basilicā","meaning":"von der Stadt / von der Markthalle (her)","kind":"phrase","id":261},{"lesson":16,"latin":"per Präp. m. Akk.","meaning":"durch, hindurch","kind":"word","id":262},{"lesson":16,"latin":"Campānia","meaning":"Kampanien (Landschaft südlich von Rom)","kind":"word","id":263},{"lesson":16,"latin":"vīnea","meaning":"der Weinberg, der Weinstock","kind":"word","id":264},{"lesson":17,"latin":"ēdūcere, ēdūcō","meaning":"herausführen","kind":"word","id":265},{"lesson":17,"latin":"cōnsistere, cōnsistō","meaning":"stehenbleiben, haltmachen, sich aufstellen","kind":"word","id":266},{"lesson":17,"latin":"dēdūcere, dēdūcō","meaning":"wegführen, hinführen","kind":"word","id":267},{"lesson":17,"latin":"addūcere, addūcō","meaning":"heranführen, veranlassen","kind":"word","id":268},{"lesson":17,"latin":"bibere, bibō","meaning":"trinken","kind":"word","id":269},{"lesson":17,"latin":"portāre, portō","meaning":"bringen, tragen","kind":"word","id":270},{"lesson":17,"latin":"vīnum","meaning":"der Wein","kind":"word","id":271},{"lesson":17,"latin":"auxilium","meaning":"die Hilfe","kind":"word","id":272},{"lesson":17,"latin":"adesse, adsum","meaning":"da sein, helfen","kind":"word","id":273},{"lesson":17,"latin":"amīcō adesse","meaning":"dem Freund helfen","kind":"phrase","id":274},{"lesson":17,"latin":"dēesse, dēsum","meaning":"abwesend sein, fehlen","kind":"word","id":275},{"lesson":17,"latin":"mortuus, a, um","meaning":"gestorben, tot; Subst. der Tote","kind":"word","id":276},{"lesson":17,"latin":"plēnus, a, um","meaning":"voll","kind":"word","id":277},{"lesson":17,"latin":"posse, possum","meaning":"können","kind":"word","id":278},{"lesson":18,"latin":"facere, faciō","meaning":"machen, tun, handeln","kind":"word","id":279},{"lesson":18,"latin":"sacrum","meaning":"das Opfer, das Heiligtum","kind":"word","id":280},{"lesson":18,"latin":"sacrum facere","meaning":"ein Opfer bringen, opfern","kind":"word","id":281},{"lesson":18,"latin":"autem (nachgestellt)","meaning":"aber, andererseits","kind":"word","id":282},{"lesson":18,"latin":"Puerī autem tacent.","meaning":"Die Jungen aber schweigen.","kind":"phrase","id":283},{"lesson":18,"latin":"dēscendere, dēscendō","meaning":"herabsteigen","kind":"word","id":284},{"lesson":18,"latin":"nōnne?","meaning":"(etwa) nicht?","kind":"word","id":285},{"lesson":18,"latin":"Nōnne servus es?","meaning":"Bist du (etwa) kein Sklave?","kind":"phrase","id":286},{"lesson":18,"latin":"magis","meaning":"mehr","kind":"word","id":287},{"lesson":18,"latin":"quam","meaning":"als, wie","kind":"word","id":288},{"lesson":18,"latin":"Quam pulchrum est templum!","meaning":"Wie schön ist der Tempel!","kind":"phrase","id":289},{"lesson":18,"latin":"magis ... quam","meaning":"mehr ... als","kind":"word","id":290},{"lesson":18,"latin":"capere, capiō","meaning":"fassen, nehmen; erobern","kind":"word","id":291},{"lesson":18,"latin":"aspicere, aspiciō","meaning":"erblicken, ansehen","kind":"word","id":292},{"lesson":18,"latin":"quattuor indekl.","meaning":"vier","kind":"word","id":293},{"lesson":18,"latin":"quīn?","meaning":"warum nicht?","kind":"word","id":294},{"lesson":18,"latin":"summus, a, um","meaning":"der höchste, oberste","kind":"word","id":295},{"lesson":19,"latin":"senātor, senātōris m","meaning":"der Senator","kind":"word","id":296},{"lesson":19,"latin":"mercātor, mercātōris m","meaning":"der Kaufmann, der Händler","kind":"word","id":297},{"lesson":19,"latin":"vēndere, vēndō","meaning":"verkaufen","kind":"word","id":298},{"lesson":19,"latin":"clārus, a, um","meaning":"klar, hell, berühmt","kind":"word","id":299},{"lesson":19,"latin":"imperātor, imperātōris m","meaning":"der Befehlshaber, der Feldherr, der Kaiser","kind":"word","id":300},{"lesson":19,"latin":"honor, honōris m","meaning":"die Ehre, das Ehrenamt","kind":"word","id":301},{"lesson":19,"latin":"in honōre esse","meaning":"in Ehren stehen, angesehen sein","kind":"word","id":302},{"lesson":19,"latin":"hodiē Adv.","meaning":"heute","kind":"word","id":303},{"lesson":19,"latin":"tantus, a, um","meaning":"so groß, so viel","kind":"word","id":304},{"lesson":19,"latin":"creāre, creō","meaning":"erschaffen, wählen","kind":"word","id":305},{"lesson":19,"latin":"petere, petō","meaning":"aufsuchen, (er)streben, bitten, verlangen","kind":"word","id":306},{"lesson":19,"latin":"licet","meaning":"es ist erlaubt, es ist möglich","kind":"word","id":307},{"lesson":19,"latin":"uxor, uxōris f","meaning":"die Ehefrau","kind":"word","id":308},{"lesson":19,"latin":"apud Präp. m. Akk.","meaning":"bei","kind":"word","id":309},{"lesson":19,"latin":"apud amīcōs","meaning":"bei Freunden","kind":"phrase","id":310},{"lesson":20,"latin":"mulier, mulíeris f","meaning":"die Frau","kind":"word","id":311},{"lesson":20,"latin":"quia Subj.","meaning":"weil","kind":"word","id":312},{"lesson":20,"latin":"sē Akk./Abl.","meaning":"sich","kind":"word","id":313},{"lesson":20,"latin":"quod Subj.","meaning":"weil; dass","kind":"word","id":314},{"lesson":20,"latin":"dum Subj.","meaning":"während, solange, bis","kind":"word","id":315},{"lesson":20,"latin":"animus","meaning":"der Geist, der Mut, die Gesinnung","kind":"word","id":316},{"lesson":20,"latin":"in animō habēre","meaning":"im Sinn haben, vorhaben","kind":"word","id":317},{"lesson":20,"latin":"mālle, mālō","meaning":"lieber wollen","kind":"word","id":318},{"lesson":20,"latin":"velle, volō","meaning":"wollen","kind":"word","id":319},{"lesson":20,"latin":"amor, amōris m","meaning":"die Liebe","kind":"word","id":320},{"lesson":20,"latin":"soror, sorōris f","meaning":"die Schwester","kind":"word","id":321},{"lesson":20,"latin":"sī Subj.","meaning":"wenn, falls","kind":"word","id":322},{"lesson":20,"latin":"fūr, fūris m","meaning":"der Dieb","kind":"word","id":323},{"lesson":20,"latin":"clāmor, clāmōris m","meaning":"das Geschrei, der Lärm","kind":"word","id":324},{"lesson":20,"latin":"pecūnia","meaning":"das Geld, das Vermögen","kind":"word","id":325},{"lesson":20,"latin":"vīgintī indekl.","meaning":"zwanzig","kind":"word","id":326},{"lesson":20,"latin":"quamquam Subj.","meaning":"obwohl","kind":"word","id":327},{"lesson":20,"latin":"līberāre, līberō","meaning":"befreien, freilassen","kind":"word","id":328},{"lesson":20,"latin":"nōlle, nōlō","meaning":"nicht wollen","kind":"word","id":329},{"lesson":21,"latin":"salūtāre, salūtō","meaning":"(be)grüßen","kind":"word","id":330},{"lesson":21,"latin":"salvē! salvēte!","meaning":"sei gegrüßt! seid gegrüßt!","kind":"word","id":331},{"lesson":21,"latin":"frāter, frātris m","meaning":"der Bruder","kind":"word","id":332},{"lesson":21,"latin":"pater, patris m","meaning":"der Vater","kind":"word","id":333},{"lesson":21,"latin":"māter, mātris f","meaning":"die Mutter","kind":"word","id":334},{"lesson":21,"latin":"tam","meaning":"so","kind":"word","id":335},{"lesson":21,"latin":"tam ... quam","meaning":"so ... wie","kind":"word","id":336},{"lesson":21,"latin":"Capua nōn tam pulchra est quam Rōma.","meaning":"Capua ist nicht so schön wie Rom.","kind":"phrase","id":337},{"lesson":21,"latin":"cīvitās, cīvitātis f","meaning":"die Gemeinde, der Staat","kind":"word","id":338},{"lesson":21,"latin":"Latīnus, a, um","meaning":"lateinisch","kind":"word","id":339},{"lesson":21,"latin":"lībertās, lībertātis f","meaning":"die Freiheit","kind":"word","id":340},{"lesson":21,"latin":"Sulla m","meaning":"Sulla (röm. Politiker im 1. Jh. v. Chr.)","kind":"word","id":341},{"lesson":21,"latin":"potestās, potestātis f","meaning":"die (Amts-)Gewalt, die Macht","kind":"word","id":342},{"lesson":21,"latin":"voluntās, voluntātis f","meaning":"der Wille, die Absicht","kind":"word","id":343},{"lesson":21,"latin":"cārus, a, um","meaning":"lieb, teuer, wertvoll","kind":"word","id":344},{"lesson":21,"latin":"herī Adv.","meaning":"gestern","kind":"word","id":345},{"lesson":21,"latin":"servitūs, servitūtis f","meaning":"die Sklaverei","kind":"word","id":346},{"lesson":22,"latin":"antīquus, a, um","meaning":"alt, altertümlich","kind":"word","id":347},{"lesson":22,"latin":"Iuppiter, Iovis m","meaning":"Jupiter (höchster Gott der Römer)","kind":"word","id":348},{"lesson":22,"latin":"caelum","meaning":"der Himmel","kind":"word","id":349},{"lesson":22,"latin":"terra","meaning":"die Erde, das Land","kind":"word","id":350},{"lesson":22,"latin":"Minerva","meaning":"Minerva (Göttin der Weisheit)","kind":"word","id":351},{"lesson":22,"latin":"Diāna","meaning":"Diana (Göttin der Jagd)","kind":"word","id":352},{"lesson":22,"latin":"bēstia","meaning":"das (wilde) Tier","kind":"word","id":353},{"lesson":22,"latin":"Neptūnus","meaning":"Neptun (Gott des Meeres)","kind":"word","id":354},{"lesson":22,"latin":"Mercurius","meaning":"Merkur (Götterbote)","kind":"word","id":355},{"lesson":22,"latin":"cēterī, ae, a","meaning":"die übrigen","kind":"word","id":356},{"lesson":22,"latin":"dare, dō","meaning":"geben","kind":"word","id":357},{"lesson":22,"latin":"varius, a, um","meaning":"bunt, verschieden, vielfältig","kind":"word","id":358},{"lesson":22,"latin":"servāre, servō","meaning":"bewahren, retten; beobachten","kind":"word","id":359},{"lesson":22,"latin":"sōlum Adv.","meaning":"nur","kind":"word","id":360},{"lesson":22,"latin":"nūntiāre, nūntiō","meaning":"melden","kind":"word","id":361},{"lesson":22,"latin":"exīstimāre, exīstimō","meaning":"meinen, einschätzen","kind":"word","id":362},{"lesson":23,"latin":"amphitheātrum","meaning":"das Amphitheater","kind":"word","id":363},{"lesson":23,"latin":"propter Präp. m. Akk.","meaning":"wegen","kind":"word","id":364},{"lesson":23,"latin":"propter amōrem","meaning":"wegen der Liebe","kind":"phrase","id":365},{"lesson":23,"latin":"gladiātor, gladiātōris m","meaning":"der Gladiator","kind":"word","id":366},{"lesson":23,"latin":"pars, partis f (Gen. Pl. -ium)","meaning":"der Teil, die Seite","kind":"word","id":367},{"lesson":23,"latin":"urbs, urbis f (Gen. Pl. -ium)","meaning":"die Stadt; die Stadt Rom","kind":"word","id":368},{"lesson":23,"latin":"prīmus, a, um","meaning":"der (die, das) erste","kind":"word","id":369},{"lesson":23,"latin":"victor, victōris m","meaning":"der Sieger","kind":"word","id":370},{"lesson":23,"latin":"exercēre, exerceō","meaning":"üben, trainieren; quälen","kind":"word","id":371},{"lesson":23,"latin":"mors, mortis f (Gen. Pl. -ium)","meaning":"der Tod","kind":"word","id":372},{"lesson":23,"latin":"dolor, dolōris m","meaning":"der Schmerz","kind":"word","id":373},{"lesson":23,"latin":"vel","meaning":"oder","kind":"word","id":374},{"lesson":23,"latin":"aqua vel vīnum","meaning":"Wasser oder Wein","kind":"phrase","id":375},{"lesson":23,"latin":"negōtium","meaning":"die Aufgabe, das Geschäft; die Angelegenheit","kind":"word","id":376},{"lesson":23,"latin":"interficere, interficiō","meaning":"töten, vernichten","kind":"word","id":377},{"lesson":23,"latin":"annus","meaning":"das Jahr","kind":"word","id":378},{"lesson":23,"latin":"virtūs, virtūtis f","meaning":"die Tapferkeit, die Tüchtigkeit, die Leistung","kind":"word","id":379},{"lesson":24,"latin":"sōl, sōlis m","meaning":"die Sonne","kind":"word","id":380},{"lesson":24,"latin":"regiō, regiōnis f","meaning":"das Gebiet, die Gegend, die Richtung","kind":"word","id":381},{"lesson":24,"latin":"homō, hominis m","meaning":"der Mensch","kind":"word","id":382},{"lesson":24,"latin":"nātiō, nātiōnis f","meaning":"das Volk, der Volksstamm","kind":"word","id":383},{"lesson":24,"latin":"multitūdō, multitūdinis f","meaning":"die große Zahl, die Menge","kind":"word","id":384},{"lesson":24,"latin":"mōns, montis m (Gen. Pl. -ium)","meaning":"der Berg","kind":"word","id":385},{"lesson":24,"latin":"fōns, fontis m (Gen. Pl. -ium)","meaning":"die Quelle, der Ursprung","kind":"word","id":386},{"lesson":24,"latin":"magnitūdō, magnitūdinis f","meaning":"die Größe","kind":"word","id":387},{"lesson":24,"latin":"hōra","meaning":"die Stunde","kind":"word","id":388},{"lesson":24,"latin":"multās hōrās","meaning":"viele Stunden lang","kind":"phrase","id":389},{"lesson":24,"latin":"surgere, surgō","meaning":"aufrichten; sich erheben, aufstehen","kind":"word","id":390},{"lesson":24,"latin":"decimus, a, um","meaning":"der (die, das) zehnte","kind":"word","id":391},{"lesson":24,"latin":"leō, leōnis m","meaning":"der Löwe","kind":"word","id":392},{"lesson":24,"latin":"āmittere, āmittō","meaning":"aufgeben, verlieren","kind":"word","id":393},{"lesson":24,"latin":"vītam āmittere","meaning":"sein Leben verlieren","kind":"phrase","id":394},{"lesson":24,"latin":"nisī Subj.","meaning":"wenn nicht","kind":"word","id":395},{"lesson":25,"latin":"circus","meaning":"der Zirkus, die Rennbahn","kind":"word","id":396},{"lesson":25,"latin":"circus Maximus","meaning":"Circus Maximus (Rennbahn für Wagenrennen in Rom)","kind":"word","id":397},{"lesson":25,"latin":"nōndum Adv.","meaning":"noch nicht","kind":"word","id":398},{"lesson":25,"latin":"anteā Adv.","meaning":"vorher, früher","kind":"word","id":399},{"lesson":25,"latin":"prīmum Adv.","meaning":"erstens, zuerst, zum ersten Mal","kind":"word","id":400},{"lesson":25,"latin":"Augustus","meaning":"Augustus (erster röm. Kaiser 27 v. Chr. – 14 n. Chr.)","kind":"word","id":401},{"lesson":25,"latin":"Caesar, Caesaris m","meaning":"Cäsar; der Kaiser","kind":"word","id":402},{"lesson":25,"latin":"altus, a, um","meaning":"hoch, tief","kind":"word","id":403},{"lesson":25,"latin":"sub Präp. m. Akk.","meaning":"unter (wohin?)","kind":"word","id":404},{"lesson":25,"latin":"sub carrum trahere","meaning":"unter den Wagen ziehen","kind":"phrase","id":405},{"lesson":25,"latin":"an (im Fragesatz)","meaning":"oder (etwa)","kind":"word","id":406},{"lesson":25,"latin":"cūrāre, cūrō","meaning":"pflegen, sorgen für","kind":"word","id":407},{"lesson":25,"latin":"equum cūrāre","meaning":"das Pferd pflegen","kind":"phrase","id":408},{"lesson":25,"latin":"familiam cūrāre","meaning":"für die Familie sorgen","kind":"phrase","id":409},{"lesson":25,"latin":"sub Präp. m. Abl.","meaning":"unter (wo?)","kind":"word","id":410},{"lesson":25,"latin":"sub carrō esse","meaning":"unter dem Wagen liegen","kind":"phrase","id":411},{"lesson":25,"latin":"mīrus, a, um","meaning":"erstaunlich, sonderbar","kind":"word","id":412},{"lesson":25,"latin":"timor, timoris m","meaning":"die Angst, die Furcht","kind":"word","id":413},{"lesson":25,"latin":"malus, a, um","meaning":"schlecht, schlimm","kind":"word","id":414},{"lesson":25,"latin":"perīculum","meaning":"die Gefahr","kind":"word","id":415},{"lesson":26,"latin":"esse, sum, fuī","meaning":"sein, sich befinden","kind":"word","id":416},{"lesson":26,"latin":"lūx, lūcis f","meaning":"das Licht, das Tageslicht","kind":"word","id":417},{"lesson":26,"latin":"dī! Vok.","meaning":"(oh) Götter!","kind":"word","id":418},{"lesson":26,"latin":"cum Subj.","meaning":"als (plötzlich); (immer) wenn","kind":"word","id":419},{"lesson":26,"latin":"cadere, cadō","meaning":"fallen","kind":"word","id":420},{"lesson":26,"latin":"complēre, compleō, complēvī","meaning":"anfüllen, auffüllen","kind":"word","id":421},{"lesson":26,"latin":"vōx, vōcis f","meaning":"die Stimme, die Äußerung, der Laut","kind":"word","id":422},{"lesson":26,"latin":"magnā vōce","meaning":"mit lauter Stimme","kind":"word","id":423},{"lesson":26,"latin":"flēre, fleō, flēvī","meaning":"weinen, beweinen","kind":"word","id":424},{"lesson":26,"latin":"mōnstrum","meaning":"das Ungeheuer","kind":"word","id":425},{"lesson":26,"latin":"dēlēre, dēleō, dēlēvī","meaning":"zerstören, vernichten","kind":"word","id":426},{"lesson":26,"latin":"tēctum","meaning":"das Dach; das Haus","kind":"word","id":427},{"lesson":26,"latin":"nox, noctis f (Gen. Pl. -ium)","meaning":"die Nacht","kind":"word","id":428},{"lesson":26,"latin":"posse, possum, potuī","meaning":"können","kind":"word","id":429},{"lesson":26,"latin":"salūs, salūtis f","meaning":"die Gesundheit, die Rettung, der Gruß, das Glück","kind":"word","id":430},{"lesson":26,"latin":"fuga","meaning":"die Flucht","kind":"word","id":431},{"lesson":26,"latin":"velle, volō, voluī","meaning":"wollen","kind":"word","id":432},{"lesson":26,"latin":"posteā Adv.","meaning":"nachher, später","kind":"word","id":433},{"lesson":27,"latin":"līberī, līberōrum m Pl.","meaning":"die Kinder","kind":"word","id":434},{"lesson":27,"latin":"fābula","meaning":"die Erzählung, die Geschichte, das Theaterstück","kind":"word","id":435},{"lesson":27,"latin":"dīvitiae, ārum f Pl.","meaning":"der Reichtum","kind":"word","id":436},{"lesson":27,"latin":"is, ea, id","meaning":"dieser, diese, dieses; er, sie, es","kind":"word","id":437},{"lesson":27,"latin":"dīc!","meaning":"sag! sprich!","kind":"word","id":438},{"lesson":27,"latin":"modestia","meaning":"die Bescheidenheit, der Anstand","kind":"word","id":439},{"lesson":27,"latin":"iacēre, iaceō","meaning":"liegen","kind":"word","id":440},{"lesson":27,"latin":"luxuria","meaning":"der Luxus, der Prunk","kind":"word","id":441},{"lesson":27,"latin":"dūc!","meaning":"führe!","kind":"word","id":442},{"lesson":27,"latin":"temptāre, temptō","meaning":"angreifen; prüfen, versuchen","kind":"word","id":443},{"lesson":27,"latin":"tenebrae, tenebrārum f Pl.","meaning":"die Dunkelheit, die Finsternis","kind":"word","id":444},{"lesson":27,"latin":"thermae, ārum f Pl.","meaning":"die warmen Bäder, die Thermen","kind":"word","id":445},{"lesson":27,"latin":"castra, castrōrum n Pl.","meaning":"das Lager","kind":"word","id":446},{"lesson":27,"latin":"reliquiae, reliquiārum f Pl.","meaning":"das Überbleibsel, der Überrest, die Ruine","kind":"word","id":447},{"lesson":28,"latin":"manēre, maneō, mānsī","meaning":"bleiben, (er)warten","kind":"word","id":448},{"lesson":28,"latin":"monumentum","meaning":"das Denkmal","kind":"word","id":449},{"lesson":28,"latin":"sentīre, sentiō, sēnsī","meaning":"fühlen, meinen, wahrnehmen","kind":"word","id":450},{"lesson":28,"latin":"aspicere, aspiciō, aspexī","meaning":"erblicken, ansehen","kind":"word","id":451},{"lesson":28,"latin":"scrībere, scrībō, scrīpsī","meaning":"schreiben, beschreiben","kind":"word","id":452},{"lesson":28,"latin":"ōra","meaning":"die Küste","kind":"word","id":453},{"lesson":28,"latin":"dūcere, dūcō, dūxī","meaning":"führen, ziehen","kind":"word","id":454},{"lesson":28,"latin":"studium","meaning":"die Beschäftigung, das Engagement, das Interesse","kind":"word","id":455},{"lesson":28,"latin":"dīcere, dīcō, dīxī","meaning":"sagen, sprechen","kind":"word","id":456},{"lesson":28,"latin":"statua","meaning":"die Statue","kind":"word","id":457},{"lesson":28,"latin":"ecce","meaning":"schau! sieh da! schaut! seht da!","kind":"word","id":458},{"lesson":28,"latin":"augēre, augeō, auxī","meaning":"vergrößern, vermehren","kind":"word","id":459},{"lesson":28,"latin":"torquēre, torqueō, torsī","meaning":"drehen; quälen","kind":"word","id":460},{"lesson":28,"latin":"Herculēs, is m","meaning":"Herkules (sagenhafter Held)","kind":"word","id":461},{"lesson":28,"latin":"mittere, mittō, mīsī","meaning":"(los)lassen, schicken, werfen","kind":"word","id":462},{"lesson":28,"latin":"dare, dō, dedī","meaning":"geben","kind":"word","id":463},{"lesson":28,"latin":"stāre, stō, stetī","meaning":"stehen","kind":"word","id":464},{"lesson":28,"latin":"etsī","meaning":"auch wenn, obwohl","kind":"word","id":465},{"lesson":28,"latin":"cadere, cadō, cecidī","meaning":"fallen","kind":"word","id":466},{"lesson":28,"latin":"suus, a, um","meaning":"sein, ihr","kind":"word","id":467},{"lesson":28,"latin":"occidere, occidō, óccidī","meaning":"(zu Boden) fallen, umkommen, untergehen","kind":"word","id":468},{"lesson":28,"latin":"āmittere, āmittō, āmīsī","meaning":"aufgeben, verlieren","kind":"word","id":469},{"lesson":28,"latin":"trahere, trahō, trāxī","meaning":"schleppen, ziehen","kind":"word","id":470},{"lesson":28,"latin":"respondēre, respondeō, respondī","meaning":"antworten","kind":"word","id":471},{"lesson":28,"latin":"enim (nachgestellt)","meaning":"nämlich, denn","kind":"word","id":472},{"lesson":28,"latin":"rīdēre, rīdeō, rīsī","meaning":"lachen, auslachen","kind":"word","id":473},{"lesson":28,"latin":"praestāre, praestō, praestitī m. Akk.","meaning":"gewähren, leisten, zeigen","kind":"word","id":474},{"lesson":29,"latin":"venīre, veniō, vēnī","meaning":"kommen","kind":"word","id":475},{"lesson":29,"latin":"sedēre, sedeō, sēdī","meaning":"sitzen","kind":"word","id":476},{"lesson":29,"latin":"Eurystheus m","meaning":"Eurystheus (mythischer König)","kind":"word","id":477},{"lesson":29,"latin":"duodecim indekl.","meaning":"zwölf","kind":"word","id":478},{"lesson":29,"latin":"quattuordecim indekl.","meaning":"vierzehn","kind":"word","id":479},{"lesson":29,"latin":"labor, labōris m","meaning":"die Arbeit, die Anstrengung","kind":"word","id":480},{"lesson":29,"latin":"secundus, a, um","meaning":"der (die, das) zweite, günstig","kind":"word","id":481},{"lesson":29,"latin":"tertius, a, um","meaning":"der (die, das) dritte","kind":"word","id":482},{"lesson":29,"latin":"quārtus, a, um","meaning":"der (die, das) vierte","kind":"word","id":483},{"lesson":29,"latin":"ita Adv.","meaning":"so","kind":"word","id":484},{"lesson":29,"latin":"Iūnō, ōnis f","meaning":"Juno (Ehefrau des Jupiter, Göttin der Ehe und der Frauen)","kind":"word","id":485},{"lesson":29,"latin":"vidēre, videō, vīdī","meaning":"sehen","kind":"word","id":486},{"lesson":29,"latin":"vincere, vincō, vīcī","meaning":"(be)siegen, übertreffen","kind":"word","id":487},{"lesson":29,"latin":"interficere, interficiō, interfēcī","meaning":"töten, vernichten","kind":"word","id":488},{"lesson":29,"latin":"quīntus, a, um","meaning":"der (die, das) fünfte","kind":"word","id":489},{"lesson":29,"latin":"Augīās, Augīae m","meaning":"Augias (mythischer König)","kind":"word","id":490},{"lesson":29,"latin":"rēx, rēgis m","meaning":"der König","kind":"word","id":491},{"lesson":29,"latin":"relinquere, relinquō, relīquī","meaning":"verlassen, zurücklassen","kind":"word","id":492},{"lesson":29,"latin":"vix Adv.","meaning":"kaum, (nur) mit Mühe","kind":"word","id":493},{"lesson":29,"latin":"invenīre, inveniō, invēnī","meaning":"finden, erfinden","kind":"word","id":494},{"lesson":29,"latin":"factum","meaning":"die Handlung, die Tat, die Tatsache","kind":"word","id":495},{"lesson":29,"latin":"facere, faciō, fēcī","meaning":"machen, tun, handeln","kind":"word","id":496},{"lesson":29,"latin":"agere, agō, ēgī","meaning":"handeln, treiben, verhandeln","kind":"word","id":497},{"lesson":29,"latin":"comprehendere, comprehendō, comprehendī","meaning":"begreifen, ergreifen, festnehmen","kind":"word","id":498},{"lesson":29,"latin":"dēscendere, dēscendō, dēscendī","meaning":"herabsteigen","kind":"word","id":499},{"lesson":29,"latin":"fluvius","meaning":"der Fluss","kind":"word","id":500},{"lesson":29,"latin":"capere, capiō, cēpī","meaning":"fassen, nehmen; erobern","kind":"word","id":501},{"lesson":29,"latin":"cōnsilium capere","meaning":"einen Plan (Entschluss) fassen","kind":"word","id":502},{"lesson":29,"latin":"vertere, vertō, vertī","meaning":"drehen, wenden","kind":"word","id":503},{"lesson":29,"latin":"movēre, moveō, mōvī","meaning":"bewegen, beeindrucken","kind":"word","id":504},{"lesson":29,"latin":"arma, armōrum n Pl.","meaning":"das Gerät, die Waffen","kind":"word","id":505},{"lesson":30,"latin":"gaudēre m. Abl.","meaning":"sich freuen über","kind":"word","id":506},{"lesson":30,"latin":"auxiliō gaudēre","meaning":"sich über die Hilfe freuen","kind":"phrase","id":507},{"lesson":30,"latin":"labōrāre m. Abl.","meaning":"leiden an, in Not / Sorge sein wegen","kind":"word","id":508},{"lesson":30,"latin":"dolōribus labōrāre","meaning":"an Schmerzen leiden","kind":"phrase","id":509},{"lesson":30,"latin":"dolēre m. Abl.","meaning":"traurig sein über","kind":"word","id":510},{"lesson":30,"latin":"iniūriā dolēre","meaning":"über ein Unrecht traurig sein","kind":"phrase","id":511},{"lesson":30,"latin":"carēre, careō m. Abl.","meaning":"frei sein von, ohne (etwas) sein, nicht haben","kind":"word","id":512},{"lesson":30,"latin":"amīcīs carēre","meaning":"keine Freunde haben, ohne Freunde sein","kind":"phrase","id":513},{"lesson":30,"latin":"līber, a, um (ā) m. Abl.","meaning":"frei von","kind":"word","id":514},{"lesson":30,"latin":"līber (ā) timōre","meaning":"frei von Angst","kind":"phrase","id":515},{"lesson":30,"latin":"officium","meaning":"der Dienst, die Pflicht, das Pflichtgefühl","kind":"word","id":516},{"lesson":30,"latin":"eō annō","meaning":"in diesem Jahr","kind":"word","id":517},{"lesson":30,"latin":"tamen","meaning":"dennoch, jedoch","kind":"word","id":518},{"lesson":30,"latin":"nocte","meaning":"nachts","kind":"word","id":519},{"lesson":30,"latin":"paulō post","meaning":"(ein) wenig später","kind":"word","id":520},{"lesson":30,"latin":"Plūtō, Plūtōnis m","meaning":"Pluto (Gott der Unterwelt)","kind":"word","id":521},{"lesson":30,"latin":"prohibēre, prohibeō (ā) m. Abl.","meaning":"abhalten von, hindern an","kind":"word","id":522},{"lesson":30,"latin":"(ā) lacrimīs prohibēre","meaning":"von (den) Tränen abhalten, am Weinen hindern","kind":"phrase","id":523},{"lesson":30,"latin":"Cerberus","meaning":"Zerberus (der dreiköpfige Höllenhund)","kind":"word","id":524},{"lesson":30,"latin":"ostendere, ostendō, ostendī","meaning":"zeigen, erklären","kind":"word","id":525},{"lesson":30,"latin":"servāre (ā m. Abl.)","meaning":"bewahren (vor), retten (vor)","kind":"word","id":526},{"lesson":30,"latin":"prīmā lūce","meaning":"bei Tagesanbruch","kind":"word","id":527},{"lesson":30,"latin":"eā hōrā","meaning":"in dieser Stunde","kind":"word","id":528},{"lesson":31,"latin":"Trōiānus, a, um","meaning":"trojanisch; Subst. der Trojaner, der Einwohner von Troja","kind":"word","id":529},{"lesson":31,"latin":"Graecus, a, um","meaning":"griechisch; Subst. der Grieche","kind":"word","id":530},{"lesson":31,"latin":"putāre, putō","meaning":"glauben, meinen","kind":"word","id":531},{"lesson":31,"latin":"certē / certō Adv.","meaning":"gewiss, sicherlich","kind":"word","id":532},{"lesson":31,"latin":"bellum","meaning":"der Krieg","kind":"word","id":533},{"lesson":31,"latin":"paulātim Adv.","meaning":"allmählich","kind":"word","id":534},{"lesson":31,"latin":"cēdere, cēdō, cessī","meaning":"gehen, nachgeben, weichen","kind":"word","id":535},{"lesson":31,"latin":"petere, petō, petīvī","meaning":"aufsuchen, (er)streben, bitten, verlangen","kind":"word","id":536},{"lesson":31,"latin":"cōnsistere, cōnsistō, cōnstitī","meaning":"stehenbleiben, haltmachen, sich aufstellen","kind":"word","id":537},{"lesson":31,"latin":"alius, alia, aliud","meaning":"ein anderer","kind":"word","id":538},{"lesson":31,"latin":"animadvertere, animadvertō, animadvertī m. AcI / Akk.","meaning":"bemerken","kind":"word","id":539},{"lesson":31,"latin":"Lāocoōn, Lāocoontis m","meaning":"Laokoon (trojanischer Priester)","kind":"word","id":540},{"lesson":31,"latin":"honestus, a, um","meaning":"ehrenhaft, angesehen","kind":"word","id":541},{"lesson":31,"latin":"cōnstat","meaning":"es ist bekannt, es steht fest","kind":"word","id":542},{"lesson":31,"latin":"Cōnstat Herculem hominibus","meaning":"Es ist bekannt, dass Herkules","kind":"phrase","id":543},{"lesson":31,"latin":"adfuisse.","meaning":"den Menschen geholfen hat / half.","kind":"phrase","id":544},{"lesson":32,"latin":"Dīdō, Dīdōnis f","meaning":"Dido (Königin Karthagos)","kind":"word","id":545},{"lesson":32,"latin":"cīvis, cīvis m (Gen. Pl. -ium)","meaning":"der Bürger","kind":"word","id":546},{"lesson":32,"latin":"Aenēās, Aenēae m","meaning":"Äneas (Trojaner und Stammvater der Römer)","kind":"word","id":547},{"lesson":32,"latin":"sibi Dat.","meaning":"sich","kind":"word","id":548},{"lesson":32,"latin":"quaerere, quaerō, quaesīvī","meaning":"erwerben wollen, suchen, fragen","kind":"word","id":549},{"lesson":32,"latin":"sēcum","meaning":"mit sich, bei sich","kind":"word","id":550},{"lesson":32,"latin":"cōgitāre, cōgitō","meaning":"denken, beabsichtigen","kind":"word","id":551},{"lesson":32,"latin":"pius, a, um","meaning":"fromm, gerecht, pflichtbewusst","kind":"word","id":552},{"lesson":32,"latin":"convenīre, conveniō, convēnī","meaning":"zusammenkommen, zusammenpassen, besuchen","kind":"word","id":553},{"lesson":32,"latin":"marītus","meaning":"der Ehemann","kind":"word","id":554},{"lesson":32,"latin":"vīvere, vīvō, vīxī","meaning":"leben","kind":"word","id":555},{"lesson":32,"latin":"oportet","meaning":"es gehört sich, es ist nötig","kind":"word","id":556},{"lesson":32,"latin":"Tē venīre oportet.","meaning":"Es ist nötig, dass du kommst. Du musst kommen.","kind":"phrase","id":557},{"lesson":32,"latin":"Carthāgō, Carthāginis f","meaning":"Karthago (Stadt in Nordafrika)","kind":"word","id":558},{"lesson":32,"latin":"fīnis, fīnis m (Gen. Pl. -ium)","meaning":"das Ende, die Grenze, das Ziel, der Zweck; Pl. das Gebiet","kind":"word","id":559},{"lesson":33,"latin":"Latīnī, Latīnōrum m Pl.","meaning":"die Latiner (Volksstamm in Italien)","kind":"word","id":560},{"lesson":33,"latin":"mūnīre, mūniō","meaning":"bauen, befestigen, schützen","kind":"word","id":561},{"lesson":33,"latin":"circum Präp. m. Akk.","meaning":"rings um, um ... herum","kind":"word","id":562},{"lesson":33,"latin":"circum mūrōs","meaning":"um die Mauern (herum)","kind":"phrase","id":563},{"lesson":33,"latin":"Latīnus","meaning":"Latinus (König der Latiner)","kind":"word","id":564},{"lesson":33,"latin":"dēspērāre, dēspērō","meaning":"die Hoffnung aufgeben, verzweifeln","kind":"word","id":565},{"lesson":33,"latin":"dē salūte dēspērāre","meaning":"die Hoffnung auf Rettung aufgeben","kind":"word","id":566},{"lesson":33,"latin":"Turnus","meaning":"Turnus (Anführer der Rútuler, Gegner des Äneas)","kind":"word","id":567},{"lesson":33,"latin":"spērāre, spērō","meaning":"erwarten, hoffen","kind":"word","id":568},{"lesson":33,"latin":"dēmōnstrāre, dēmōnstrō","meaning":"beweisen, darlegen","kind":"word","id":569},{"lesson":33,"latin":"audācia","meaning":"die Frechheit, die Kühnheit","kind":"word","id":570},{"lesson":33,"latin":"violāre, violō","meaning":"verwunden, verletzen, entehren","kind":"word","id":571},{"lesson":33,"latin":"ferrum","meaning":"das Eisen; die Waffe","kind":"word","id":572},{"lesson":33,"latin":"surgere, surgō, surrēxī","meaning":"aufrichten; sich erheben, aufstehen","kind":"word","id":573},{"lesson":33,"latin":"Italia","meaning":"Italien","kind":"word","id":574},{"lesson":33,"latin":"caedere, caedō, cecīdī","meaning":"fällen, töten","kind":"word","id":575},{"lesson":33,"latin":"dōnāre, dōnō","meaning":"schenken","kind":"word","id":576},{"lesson":33,"latin":"venia","meaning":"der Gefallen; die Nachsicht, die Verzeihung","kind":"word","id":577},{"lesson":33,"latin":"quidem Adv.","meaning":"freilich, gewiss, wenigstens, zwar","kind":"word","id":578},{"lesson":33,"latin":"occīdere, occīdō, occīdī","meaning":"niederschlagen, töten","kind":"word","id":579},{"lesson":34,"latin":"Faustulus","meaning":"Faustulus (Hirte, der Romulus und Remus entdeckte)","kind":"word","id":580},{"lesson":34,"latin":"ācer, ācris, ācre","meaning":"energisch, heftig, scharf","kind":"word","id":581},{"lesson":34,"latin":"bibere, bibō, bibī","meaning":"trinken","kind":"word","id":582},{"lesson":34,"latin":"pellere, pellō, pepulī","meaning":"stoßen, schlagen, (ver)treiben","kind":"word","id":583},{"lesson":34,"latin":"celer, celeris, celere","meaning":"schnell","kind":"word","id":584},{"lesson":34,"latin":"tamquam","meaning":"Adv. wie Subj. wie wenn, als ob","kind":"word","id":585},{"lesson":34,"latin":"sīgnum","meaning":"das Merkmal, das Zeichen; die Statue","kind":"word","id":586},{"lesson":34,"latin":"Rōmulus / Remus","meaning":"Romulus / Remus (Zwillingsbrüder und sagenhafte Gründer Roms)","kind":"word","id":587},{"lesson":34,"latin":"iuvenis, iuvenis m","meaning":"der junge Mann; Adj. jung","kind":"word","id":588},{"lesson":34,"latin":"comes, comitis m/f","meaning":"der (die) Begleiter(in), der Gefährte, die Gefährtin","kind":"word","id":589},{"lesson":34,"latin":"mīles, mīlitis m","meaning":"der Soldat","kind":"word","id":590},{"lesson":34,"latin":"repellere, repellō, reppulī","meaning":"zurückstoßen, abweisen, vertreiben","kind":"word","id":591},{"lesson":35,"latin":"locus","meaning":"der Ort, der Platz, die Stelle","kind":"word","id":592},{"lesson":35,"latin":"ūnus, a, um","meaning":"einer, ein einziger","kind":"word","id":593},{"lesson":35,"latin":"ūnus ē / ex m. Abl.","meaning":"einer von","kind":"word","id":594},{"lesson":35,"latin":"fortis, e","meaning":"kräftig, tapfer","kind":"word","id":595},{"lesson":35,"latin":"trīstis, e","meaning":"traurig, unfreundlich","kind":"word","id":596},{"lesson":35,"latin":"dēfendere, dēfendō, dēfendī (ā m. Abl.)","meaning":"abwehren, verteidigen (vor / gegen)","kind":"word","id":597},{"lesson":35,"latin":"trēs, trēs, tria","meaning":"drei","kind":"word","id":598},{"lesson":35,"latin":"Amūlius","meaning":"Amulius (König von Alba Longa, Bruder des Numitor)","kind":"word","id":599},{"lesson":35,"latin":"accūsāre, accūsō","meaning":"anklagen, beschuldigen","kind":"word","id":600},{"lesson":35,"latin":"turpis, e","meaning":"unanständig, hässlich, schändlich","kind":"word","id":601},{"lesson":35,"latin":"postquam Subj.","meaning":"nachdem, als","kind":"word","id":602},{"lesson":35,"latin":"Numitor, Numitōris m","meaning":"Numitor (König von Alba Longa, Großvater von Romulus und Remus)","kind":"word","id":603},{"lesson":35,"latin":"dulcis, e","meaning":"angenehm, süß","kind":"word","id":604},{"lesson":35,"latin":"crūdēlis, e","meaning":"grausam","kind":"word","id":605},{"lesson":35,"latin":"omnis, e","meaning":"jeder, ganz; Pl. alle","kind":"word","id":606},{"lesson":36,"latin":"quī, quae, quod","meaning":"welcher, welche, welches; der, die, das","kind":"word","id":607},{"lesson":36,"latin":"idōneus, a, um","meaning":"geeignet, passend","kind":"word","id":608},{"lesson":36,"latin":"dēligere, dēligō, dēlēgī","meaning":"(aus)wählen","kind":"word","id":609},{"lesson":36,"latin":"condere, condō, condidī","meaning":"verwahren, verbergen; erbauen, gründen","kind":"word","id":610},{"lesson":36,"latin":"maximē Adv.","meaning":"am meisten, besonders","kind":"word","id":611},{"lesson":36,"latin":"opportūnus, a, um","meaning":"geeignet, günstig","kind":"word","id":612},{"lesson":36,"latin":"nātūra","meaning":"die Natur, das Wesen, die Beschaffenheit","kind":"word","id":613},{"lesson":36,"latin":"multum Adv.","meaning":"sehr, viel","kind":"word","id":614},{"lesson":36,"latin":"multum valēre","meaning":"großen Einfluss haben","kind":"word","id":615},{"lesson":36,"latin":"Aventīnus","meaning":"der Aventin (am Tiber gelegener Hügel Roms)","kind":"word","id":616},{"lesson":36,"latin":"contendere, contendō, contendī","meaning":"sich anstrengen, kämpfen; eilen; behaupten","kind":"word","id":617},{"lesson":36,"latin":"Palātium","meaning":"der Palatin (einer der sieben Hügel Roms)","kind":"word","id":618},{"lesson":36,"latin":"Līvius","meaning":"Titus Livius (berühmter römischer Geschichtsschreiber, 59 v. Chr. – 17 n. Chr.)","kind":"word","id":619},{"lesson":36,"latin":"accipere, accipiō, accēpī","meaning":"erhalten, erfahren, annehmen","kind":"word","id":620},{"lesson":37,"latin":"et ... et","meaning":"sowohl ... als auch","kind":"word","id":621},{"lesson":37,"latin":"arcessere, arcessō, arcessīvī","meaning":"herbeirufen, holen","kind":"word","id":622},{"lesson":37,"latin":"commūnis, e","meaning":"gemeinsam, allgemein","kind":"word","id":623},{"lesson":37,"latin":"tūtus, a, um","meaning":"sicher","kind":"word","id":624},{"lesson":37,"latin":"hostis, hostis m (Gen. Pl. -ium)","meaning":"der Feind (der Landesfeind)","kind":"word","id":625},{"lesson":37,"latin":"occupāre, occupō","meaning":"besetzen, einnehmen","kind":"word","id":626},{"lesson":37,"latin":"quemadmodum","meaning":"auf welche Weise, wie","kind":"word","id":627},{"lesson":37,"latin":"fortūna","meaning":"das Schicksal, das Glück","kind":"word","id":628},{"lesson":37,"latin":"glōria","meaning":"der Ruhm, die Ehre","kind":"word","id":629},{"lesson":37,"latin":"inānis, e","meaning":"leer, wertlos","kind":"word","id":630},{"lesson":37,"latin":"crēdere, crēdō, crēdidī","meaning":"glauben, anvertrauen","kind":"word","id":631},{"lesson":38,"latin":"cūra","meaning":"die Pflege, die Sorge","kind":"word","id":632},{"lesson":38,"latin":"quandō?","meaning":"wann?","kind":"word","id":633},{"lesson":38,"latin":"beātus, a, um","meaning":"glücklich, reich","kind":"word","id":634},{"lesson":38,"latin":"aestās, aestātis f","meaning":"der Sommer","kind":"word","id":635},{"lesson":38,"latin":"vītam agere","meaning":"ein Leben führen, leben","kind":"word","id":636},{"lesson":38,"latin":"mōs, mōris m","meaning":"die Sitte, der Brauch; Pl. der Charakter","kind":"word","id":637},{"lesson":38,"latin":"Sabīnus, a, um","meaning":"sabinisch; Subst. der Sabiner (in der Nähe Roms lebender Volksstamm)","kind":"word","id":638},{"lesson":38,"latin":"cōnfirmāre, cōnfirmō","meaning":"bekräftigen, ermutigen, stärken","kind":"word","id":639},{"lesson":38,"latin":"omittere, omittō, omīsī","meaning":"aufgeben, beiseite lassen","kind":"word","id":640},{"lesson":38,"latin":"aperīre, aperiō, aperuī","meaning":"aufdecken, öffnen","kind":"word","id":641},{"lesson":38,"latin":"Hersilia","meaning":"Hersilia (die Ehefrau des Romulus)","kind":"word","id":642},{"lesson":39,"latin":"gerere, gerō, gessī","meaning":"ausführen, führen, tragen","kind":"word","id":643},{"lesson":39,"latin":"bellum gerere","meaning":"Krieg führen","kind":"word","id":644},{"lesson":39,"latin":"Tatius","meaning":"Tatius (König der Sabiner)","kind":"word","id":645},{"lesson":39,"latin":"stultus, a, um","meaning":"dumm","kind":"word","id":646},{"lesson":39,"latin":"ergō Adv.","meaning":"also, deshalb","kind":"word","id":647},{"lesson":39,"latin":"Spurius Tarpēius","meaning":"Spurius Tarpeius (römischer Befehlshaber)","kind":"word","id":648},{"lesson":39,"latin":"cōpia","meaning":"die Menge, der Vorrat, die Möglichkeit; Pl. die Truppen","kind":"word","id":649},{"lesson":39,"latin":"resistere, resistō, restitī","meaning":"stehenbleiben; Widerstand leisten","kind":"word","id":650},{"lesson":39,"latin":"praemium","meaning":"die Belohnung, der Lohn","kind":"word","id":651},{"lesson":39,"latin":"appetere, appetō, appetīvī","meaning":"erstreben, haben wollen; angreifen","kind":"word","id":652},{"lesson":39,"latin":"Tarpēia","meaning":"Tarpeia (Tochter des Spurius Tarpeius)","kind":"word","id":653},{"lesson":39,"latin":"concēdere, concēdō, concessī","meaning":"erlauben, nachgeben, zugestehen","kind":"word","id":654},{"lesson":39,"latin":"aureus, a, um","meaning":"golden, aus Gold","kind":"word","id":655},{"lesson":40,"latin":"metus, metūs m","meaning":"die Angst","kind":"word","id":656},{"lesson":40,"latin":"Tarquinius Superbus","meaning":"Tarquinius Superbus (letzter etruskischer König von Rom)","kind":"word","id":657},{"lesson":40,"latin":"superbus, a, um","meaning":"stolz, überheblich","kind":"word","id":658},{"lesson":40,"latin":"Brūtus","meaning":"Brutus (Befreier Roms)","kind":"word","id":659},{"lesson":40,"latin":"gemitus, gemitūs m","meaning":"das Seufzen, die Traurigkeit","kind":"word","id":660},{"lesson":40,"latin":"portus, portūs m","meaning":"der Hafen","kind":"word","id":661},{"lesson":40,"latin":"pertinēre, pertineō ad m. Akk.","meaning":"betreffen, gehören (zu), sich erstrecken (bis)","kind":"word","id":662},{"lesson":40,"latin":"vultus, vultūs m","meaning":"das Gesicht, der Gesichtsausdruck; Pl. die Gesichtszüge","kind":"word","id":663},{"lesson":40,"latin":"manus, manūs f","meaning":"die Hand; die Schar (von Bewaffneten)","kind":"word","id":664},{"lesson":40,"latin":"tālis, e","meaning":"derartig, ein solcher, so (beschaffen)","kind":"word","id":665},{"lesson":40,"latin":"laetus, a, um","meaning":"froh; fruchtbar","kind":"word","id":666},{"lesson":40,"latin":"igitur Adv.","meaning":"also, folglich","kind":"word","id":667},{"lesson":41,"latin":"rēs, reī f","meaning":"die Angelegenheit, das Ding, die Sache","kind":"word","id":668},{"lesson":41,"latin":"causa","meaning":"die Sache, die Ursache, der Grund; der Prozess","kind":"word","id":669},{"lesson":41,"latin":"medius, a, um","meaning":"der mittlere, in der Mitte (von)","kind":"word","id":670},{"lesson":41,"latin":"mediā in turbā","meaning":"mitten in der Menge","kind":"phrase","id":671},{"lesson":41,"latin":"Lucrētia","meaning":"Lukretia (Heldin der röm. Frühgeschichte)","kind":"word","id":672},{"lesson":41,"latin":"rēs pūblica","meaning":"der Staat","kind":"word","id":673},{"lesson":41,"latin":"perniciēs, perniciēī f","meaning":"das Verderben, die Vernichtung","kind":"word","id":674},{"lesson":41,"latin":"rēs adversae f Pl.","meaning":"das Unglück","kind":"word","id":675},{"lesson":41,"latin":"rēs futūrae f Pl.","meaning":"die Zukunft","kind":"word","id":676},{"lesson":41,"latin":"rēs secundae f Pl.","meaning":"das Glück","kind":"word","id":677},{"lesson":41,"latin":"spēs, speī f","meaning":"die Erwartung, die Hoffnung","kind":"word","id":678},{"lesson":41,"latin":"diēs, diēī m","meaning":"der Tag","kind":"word","id":679}];
+
+    const STORAGE_KEY = "romulingo-state-v4";
+    const $ = (selector, root = document) => root.querySelector(selector);
+    const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+
+    const I18N = {
+      en: {
+        kahoot: "Kahoot", settings: "Settings", language: "Language", sfx: "SFX", darkMode: "Dark mode",
+        path: "Path", games: "Games", shop: "Shop", avatar: "Avatar", reset: "Reset", score: "Score",
+        hearts: "Hearts", stars: "Stars", flap: "Flap", end: "End", username: "Username", save: "Save",
+        lesson: "Lesson", host: "Host", join: "Join", createRoom: "Create room", start: "Start", next: "Next",
+        players: "Players", question: "Question", roomCode: "Room code", startTitle: "Choose your name",
+        face: "Face", hat: "Hat", item: "Item", flappy: "Flappy", breakout: "Breakout", memory: "Memory",
+        close: "Close", retry: "Retry", done: "Done", locked: "Locked", open: "Open", allWords: "All words",
+        notEnough: "Not enough", bought: "Bought", equipped: "Equipped", complete: "Complete", reward: "Reward",
+        correct: "Correct", wrong: "Wrong", matched: "Matched", chooseGame: "Choose game", noPlayers: "No players",
+        noScores: "No scores", joinWaiting: "Waiting", connected: "Connected", answerSent: "Answer sent",
+        roundDone: "Round complete", roomOpen: "Room open", needRoom: "Create a room", needCode: "Enter 7 numbers",
+        lessonLocked: "Locked", lessonComplete: "Complete", profileSaved: "Saved", demoReset: "Reset",
+        loading: "Loading"
+      },
+      de: {
+        kahoot: "Kahoot", settings: "Einstellungen", language: "Sprache", sfx: "SFX", darkMode: "Dunkelmodus",
+        path: "Pfad", games: "Spiele", shop: "Shop", avatar: "Avatar", reset: "Zurücksetzen", score: "Punkte",
+        hearts: "Herzen", stars: "Sterne", flap: "Flattern", end: "Ende", username: "Name", save: "Speichern",
+        lesson: "Lektion", host: "Host", join: "Beitreten", createRoom: "Raum erstellen", start: "Start", next: "Weiter",
+        players: "Spieler", question: "Frage", roomCode: "Raumcode", startTitle: "Wähle deinen Namen",
+        face: "Gesicht", hat: "Hut", item: "Item", flappy: "Flappy", breakout: "Breakout", memory: "Memory",
+        close: "Schließen", retry: "Nochmal", done: "Fertig", locked: "Gesperrt", open: "Offen", allWords: "Alle Wörter",
+        notEnough: "Zu wenig", bought: "Gekauft", equipped: "Ausgerüstet", complete: "Fertig", reward: "Belohnung",
+        correct: "Richtig", wrong: "Falsch", matched: "Paar", chooseGame: "Spiel wählen", noPlayers: "Keine Spieler",
+        noScores: "Keine Punkte", joinWaiting: "Warten", connected: "Verbunden", answerSent: "Antwort gesendet",
+        roundDone: "Runde fertig", roomOpen: "Raum offen", needRoom: "Raum erstellen", needCode: "7 Zahlen eingeben",
+        lessonLocked: "Gesperrt", lessonComplete: "Fertig", profileSaved: "Gespeichert", demoReset: "Zurückgesetzt",
+        loading: "Laden"
+      }
+    };
+
+    const AVATAR_ITEMS = [
+      { id: "face-smile", type: "face", emoji: "😀", price: 0, currency: "coins", name: { en: "Smile", de: "Lächeln" } },
+      { id: "face-grin", type: "face", emoji: "😄", price: 0, currency: "coins", name: { en: "Grin", de: "Grinsen" } },
+      { id: "face-focus", type: "face", emoji: "🧐", price: 0, currency: "coins", name: { en: "Focus", de: "Fokus" } },
+      { id: "face-cool", type: "face", emoji: "😎", price: 90, currency: "coins", name: { en: "Cool", de: "Cool" } },
+      { id: "face-star", type: "face", emoji: "🤩", price: 5, currency: "gems", name: { en: "Star", de: "Star" } },
+      { id: "hat-none", type: "hat", emoji: "", price: 0, currency: "coins", name: { en: "None", de: "Kein Hut" } },
+      { id: "hat-grad", type: "hat", emoji: "🎓", price: 0, currency: "coins", name: { en: "Scholar", de: "Gelehrt" } },
+      { id: "hat-crown", type: "hat", emoji: "👑", price: 8, currency: "gems", name: { en: "Crown", de: "Krone" } },
+      { id: "hat-cap", type: "hat", emoji: "🧢", price: 0, currency: "coins", name: { en: "Cap", de: "Kappe" } },
+      { id: "item-scroll", type: "item", emoji: "📜", price: 0, currency: "coins", name: { en: "Scroll", de: "Rolle" } },
+      { id: "item-book", type: "item", emoji: "📘", price: 0, currency: "coins", name: { en: "Book", de: "Buch" } },
+      { id: "item-pen", type: "item", emoji: "✏️", price: 0, currency: "coins", name: { en: "Pencil", de: "Stift" } },
+      { id: "item-sword", type: "item", emoji: "⚔️", price: 130, currency: "coins", name: { en: "Sword", de: "Schwert" } },
+      { id: "item-shield", type: "item", emoji: "🛡️", price: 160, currency: "coins", name: { en: "Shield", de: "Schild" } },
+      { id: "item-gem", type: "item", emoji: "💎", price: 10, currency: "gems", name: { en: "Gem", de: "Juwel" } }
+    ];
+
+    const GAME_TYPES = ["flappy", "breakout", "memory"];
+    const lessons = new Map();
+    VOCABULARY.forEach((entry) => {
+      if (!lessons.has(entry.lesson)) lessons.set(entry.lesson, []);
+      lessons.get(entry.lesson).push(entry);
+    });
+    const lessonNumbers = [...lessons.keys()].sort((a, b) => a - b);
+
+    const defaultState = () => ({
+      started: false,
+      playerName: "RG-Discipulus",
+      lang: "en",
+      settings: { sfx: true, theme: "light" },
+      coins: 0,
+      gems: 0,
+      stars: {},
+      inventory: AVATAR_ITEMS.filter((item) => item.price === 0).map((item) => item.id),
+      avatar: { face: "face-smile", hat: "hat-none", item: "item-scroll" }
+    });
+
+    let state = loadState();
+    if (!state.playerName || state.playerName === "Legatus") {
+      state.playerName = "RG-Discipulus";
+      saveState();
+    }
+    let audioContext = null;
+    let game = null;
+    let raf = null;
+    let selectedLessonForPicker = 1;
+    let kahoot = {
+      hostPeer: null,
+      hostConnections: new Map(),
+      players: new Map(),
+      hostGame: null,
+      joinPeer: null,
+      joinConnection: null,
+      joinQuestion: null
+    };
+
+    function tr(key) { return (I18N[state.lang] && I18N[state.lang][key]) || I18N.en[key] || key; }
+    function loadState() {
+      try { return deepMerge(defaultState(), JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}); }
+      catch { return defaultState(); }
+    }
+
+    function deepMerge(base, extra) {
+      Object.keys(extra || {}).forEach((key) => {
+        if (extra[key] && typeof extra[key] === "object" && !Array.isArray(extra[key]) && base[key]) base[key] = deepMerge(base[key], extra[key]);
+        else base[key] = extra[key];
+      });
+      return base;
+    }
+
+    function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    function shuffle(items) {
+      const copy = [...items];
+      for (let i = copy.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function sample(items, count) { return shuffle(items).slice(0, count); }
+    function itemById(id) { return AVATAR_ITEMS.find((item) => item.id === id) || null; }
+    function itemName(item) { return item.name[state.lang] || item.name.en; }
+    function canAccessLesson(lessonNumber) { return lessonNumber === 1 || Number(state.stars[lessonNumber - 1]) >= 3; }
+    function lessonComplete(lessonNumber) { return Number(state.stars[lessonNumber]) >= 3; }
+    function nextPlayableLesson() { return lessonNumbers.find((n) => canAccessLesson(n) && !lessonComplete(n)) || lessonNumbers[lessonNumbers.length - 1]; }
+    function gameForLesson(lessonNumber) { return GAME_TYPES[(lessonNumber - 1) % GAME_TYPES.length]; }
+
+    function avatarHTML(size = 94, avatar = state.avatar) {
+      const face = itemById(avatar.face)?.emoji || "😀";
+      const hat = itemById(avatar.hat)?.emoji || "";
+      const item = itemById(avatar.item)?.emoji || "";
+      return `<div class="emoji-avatar" style="--size:${size}px"><span class="hat">${hat}</span><span class="face">${face}</span><span class="item">${item}</span></div>`;
+    }
+
+    function renderAvatar(target, size = 94, avatar = state.avatar) { target.innerHTML = avatarHTML(size, avatar); }
+    function starsHTML(count) { return Array.from({ length: 4 }, (_, index) => `<span class="${index < count ? "filled" : ""}">★</span>`).join(""); }
+    function rewardForStars(stars) {
+      const safe = Math.max(0, Number(stars) || 0);
+      return { coins: safe ? Math.round(55 * safe * (safe === 4 ? 1.5 : 1)) : 0, gems: safe >= 4 ? 3 : safe >= 3 ? 2 : safe >= 2 ? 1 : 0 };
+    }
+
+    function lessonReward(lessonNumber) {
+      const coins = lessonNumber === 4 ? 100 : 45 + Math.ceil(lessonNumber / 2) * 10;
+      const gems = lessonNumber % 5 === 0 ? Math.max(1, Math.floor(lessonNumber / 10) + 1) : 0;
+      return { coins, gems };
+    }
+
+    function rewardHTML(lessonNumber) {
+      const reward = lessonReward(lessonNumber);
+      const isGem = reward.gems > 0;
+      const value = isGem ? reward.gems : reward.coins;
+      const fallback = isGem ? "💎" : "🎁";
+      const src = isGem ? "gems.png" : "chest.png";
+      const suffix = isGem ? "💎" : "🪙";
+      return `<div class="reward-node" title="${value} ${suffix}">
+        <span class="reward-icon"><img src="${src}" alt="" onerror="this.replaceWith(document.createTextNode('${fallback}'))"></span>
+        <span class="reward-text"><b>${value}</b><small>${suffix}</small></span>
+      </div>`;
+    }
+
+    function applyTheme() {
+      document.body.dataset.theme = state.settings.theme;
+      $("#themeToggle").classList.toggle("on", state.settings.theme === "dark");
+      $("#sfxToggle").classList.toggle("on", !!state.settings.sfx);
+    }
+
+    function applyLanguage() {
+      document.documentElement.lang = state.lang;
+      $$("[data-i18n]").forEach((node) => { node.textContent = tr(node.dataset.i18n); });
+      $("#langTop").textContent = state.lang.toUpperCase();
+      $("#languageSwitch").textContent = state.lang.toUpperCase();
+      renderAll();
+    }
+
+    function renderAll() {
+      renderStats();
+      renderPath();
+      renderSelectors();
+      renderShop();
+      renderAvatarPage();
+      renderKahootShell();
+      updateHud();
+    }
+
+    function renderStats() {
+      $("#coinCount").textContent = state.coins;
+      $("#gemCount").textContent = state.gems;
+      $("#topCoinCount").textContent = state.coins;
+      $("#topGemCount").textContent = state.gems;
+      $("#sideName").textContent = state.playerName || "RG-Discipulus";
+      $("#topProfileName").textContent = state.playerName || "RG-Discipulus";
+      const mastered = Object.values(state.stars).filter((stars) => Number(stars) >= 3).length;
+      $("#sideProgress").textContent = `${mastered} / ${lessonNumbers.length}`;
+      renderAvatar($("#sideAvatar"), 58);
+      renderAvatar($("#topProfileAvatar"), 34);
+      renderAvatar($("#shopAvatar"), 150);
+      renderAvatar($("#profileAvatar"), 170);
+      renderAvatar($("#kahootAvatar"), 120);
+      $("#nameInput").value = state.playerName || "";
+    }
+
+    function renderPath() {
+      const mastered = Object.values(state.stars).filter((stars) => Number(stars) >= 3).length;
+      const perfect = Object.values(state.stars).filter((stars) => Number(stars) === 4).length;
+      $("#pathSummary").innerHTML = [
+        [lessonNumbers.length, tr("lesson")],
+        [VOCABULARY.length, tr("allWords")],
+        [mastered, tr("complete")],
+        [perfect, "4★"]
+      ].map(([value, label]) => `<div><b>${value}</b><span>${label}</span></div>`).join("");
+      const stepCount = lessonNumbers.length;
+      const height = Math.max(180, stepCount * 120);
+      const points = lessonNumbers.map((_, index) => {
+        const pos = index % 3 === 0 ? 28 : index % 3 === 1 ? 50 : 72;
+        return { x: pos, y: 58 + index * 120 };
+      });
+      const d = points.reduce((path, point, index) => {
+        if (index === 0) return `M ${point.x} ${point.y}`;
+        const prev = points[index - 1];
+        const controlX = index % 2 ? 78 : 22;
+        const controlY = (prev.y + point.y) / 2;
+        return `${path} Q ${controlX} ${controlY} ${point.x} ${point.y}`;
+      }, "");
+      const svg = `<svg class="path-lines" viewBox="0 0 100 ${height}" preserveAspectRatio="none"><path d="${d}"></path></svg>`;
+      $("#lessonPath").style.minHeight = `${height}px`;
+      $("#lessonPath").innerHTML = svg + lessonNumbers.map((lessonNumber, index) => {
+        const stars = Number(state.stars[lessonNumber]) || 0;
+        const accessible = canAccessLesson(lessonNumber);
+        const done = stars >= 3;
+        const cls = !accessible ? "locked" : done ? "done" : stars > 0 ? "retry" : "";
+        const icon = !accessible ? "🔒" : done ? "✓" : lessonNumber;
+        const status = !accessible ? tr("locked") : done ? tr("done") : stars > 0 ? tr("retry") : tr("open");
+        const side = index % 3 === 0 ? "left" : index % 3 === 1 ? "center" : "right";
+        return `<div class="path-step ${side}">
+          <button class="path-node ${cls}" data-lesson="${lessonNumber}" ${(!accessible || done) ? "disabled" : ""} type="button">${icon}</button>
+          <div class="path-label"><strong>${tr("lesson")} ${lessonNumber}</strong><div class="stars">${starsHTML(stars)}</div><div class="muted">${status} · ${tr(gameForLesson(lessonNumber))}</div></div>
+          ${rewardHTML(lessonNumber)}
+        </div>`;
+      }).join("");
+      $$("[data-lesson]").forEach((button) => button.addEventListener("click", () => openGamePicker(Number(button.dataset.lesson))));
+    }
+
+    function renderSelectors() {
+      $("#lessonSelect").innerHTML = lessonNumbers.map((lessonNumber) => {
+        const disabled = !canAccessLesson(lessonNumber) || lessonComplete(lessonNumber);
+        return `<option value="${lessonNumber}" ${disabled ? "disabled" : ""}>${tr("lesson")} ${lessonNumber}</option>`;
+      }).join("");
+      $("#lessonSelect").value = String(nextPlayableLesson());
+      $("#kahootLessonSelect").innerHTML = `<option value="all">${tr("allWords")}</option>` + lessonNumbers.map((lessonNumber) => `<option value="${lessonNumber}">${tr("lesson")} ${lessonNumber}</option>`).join("");
+    }
+
+    function renderShop() {
+      $("#shopGrid").innerHTML = AVATAR_ITEMS.map((item) => {
+        const owned = state.inventory.includes(item.id);
+        const equipped = state.avatar[item.type] === item.id;
+        const price = item.price ? `${item.price} ${item.currency === "gems" ? "💎" : "🪙"}` : "0 🪙";
+        const label = equipped ? tr("equipped") : owned ? tr("equipped") : price;
+        return `<article class="shop-item">
+          <div class="shop-emoji">${item.emoji || "—"}</div>
+          <strong>${escapeHTML(itemName(item))}</strong>
+          <span class="muted">${price}</span>
+          <button class="${owned ? "ghost" : "primary"}" data-shop="${item.id}" ${equipped ? "disabled" : ""} type="button">${label}</button>
+        </article>`;
+      }).join("");
+      $$("[data-shop]").forEach((button) => button.addEventListener("click", () => buyOrEquip(button.dataset.shop)));
+    }
+
+    function renderAvatarPage() {
+      $("#profileLessons").innerHTML = lessonNumbers.map((lessonNumber) => {
+        const stars = Number(state.stars[lessonNumber]) || 0;
+        return `<div class="score-row"><strong>${tr("lesson")} ${lessonNumber}</strong><span class="stars">${starsHTML(stars)}</span></div>`;
+      }).join("");
+    }
+
+    function renderKahootShell() {
+      renderHostPlayers();
+      if (!$("#joinScoreboard").innerHTML.trim()) renderScoreboard("#joinScoreboard", []);
+      if (!$("#hostQuestionBoard").innerHTML.trim()) $("#hostQuestionBoard").innerHTML = `<div class="muted">${tr("question")}</div>`;
+      if (!$("#joinQuestionBoard").innerHTML.trim()) $("#joinQuestionBoard").innerHTML = `<div class="muted">${tr("joinWaiting")}</div>`;
+      $("#joinStatus").textContent ||= tr("joinWaiting");
+    }
+
+    function buyOrEquip(id) {
+      const item = itemById(id);
+      if (!item) return;
+      if (!state.inventory.includes(id)) {
+        if (state[item.currency] < item.price) {
+          toast(`${tr("notEnough")} ${item.currency === "gems" ? "💎" : "🪙"}`);
+          playSfx("wrong");
+          return;
+        }
+        state[item.currency] -= item.price;
+        state.inventory.push(id);
+        toast(`${tr("bought")} ${item.emoji}`);
+        playSfx("coin");
+      } else {
+        playSfx("click");
+      }
+      state.avatar[item.type] = id;
+      saveState();
+      renderAll();
+    }
+
+    function showView(view) {
+      $$(".view").forEach((section) => section.classList.toggle("active", section.id === `${view}View`));
+      $$(".nav-btn").forEach((button) => button.classList.toggle("active", button.dataset.view === view));
+      if (view === "games") resizeCanvas();
+    }
+
+    function openGamePicker(lessonNumber) {
+      startGame(lessonNumber, gameForLesson(lessonNumber));
+    }
+
+    function closeGamePicker() {}
+
+    function startGame(lessonNumber, type = gameForLesson(lessonNumber)) {
+      if (!canAccessLesson(lessonNumber)) { toast(tr("lessonLocked")); return; }
+      if (lessonComplete(lessonNumber)) { toast(tr("lessonComplete")); return; }
+      closeGamePicker();
+      showView("games");
+      $("#lessonSelect").value = String(lessonNumber);
+      cancelAnimationFrame(raf);
+      const pool = shuffle(lessons.get(lessonNumber) || []);
+      const entries = type === "memory" ? pool.slice(0, Math.min(8, pool.length)) : pool;
+      game = {
+        type, lessonNumber, entries, index: 0, correct: 0, misses: 0, hearts: type === "memory" ? 99 : 3,
+        active: true, finished: false, challenge: null, width: 960, height: 540,
+        bird: { x: 180, y: 260, vy: 0 }, obstacleX: 920, lastTime: 0,
+        ball: { x: 420, y: 330, vx: 86, vy: -96, r: 10 }, paddle: { x: 360, y: 500, w: 210, h: 16 }, blocks: [], readyAt: 0,
+        memory: { cards: [], first: null, second: null, lock: false, matched: 0, moves: 0 }
+      };
+      $("#hudTitle").textContent = tr(type);
+      $("#canvasWrap").hidden = type === "memory";
+      $("#memoryBoard").hidden = type !== "memory";
+      $("#resultBox").classList.remove("show");
+      $("#flapBtn").disabled = type !== "flappy";
+      if (type === "memory") setupMemory();
+      else nextArcadeChallenge();
+      resizeCanvas();
+      if (type !== "memory") raf = requestAnimationFrame(loop);
+      playSfx("start");
+    }
+
+    function nextArcadeChallenge() {
+      if (!game || game.index >= game.entries.length || game.hearts <= 0) { finishRun(); return; }
+      game.challenge = createChallenge(game.entries[game.index], game.entries);
+      if (game.type === "flappy") {
+        game.obstacleX = game.width + 80;
+        game.bird.y = game.height * .52;
+        game.bird.vy = -30;
+      }
+      if (game.type === "breakout") setupBreakoutBlocks();
+      updateHud();
+    }
+
+    function createChallenge(entry, localPool) {
+      const distractorPool = VOCABULARY.filter((candidate) => candidate.id !== entry.id && candidate.latin !== entry.latin);
+      const local = localPool.filter((candidate) => candidate.id !== entry.id && candidate.latin !== entry.latin);
+      const options = shuffle([entry, ...sample([...local, ...distractorPool], 3)]).slice(0, 4);
+      if (!options.some((item) => item.id === entry.id)) options[0] = entry;
+      const shuffled = shuffle(options);
+      return { id: `${entry.id}-${Math.random()}`, entry, prompt: entry.meaning, options: shuffled.map((item) => item.latin), correctIndex: shuffled.findIndex((item) => item.id === entry.id) };
+    }
+
+    function setupBreakoutBlocks() {
+      const rows = 2, cols = 2;
+      const gap = 14;
+      const blockW = (game.width - 64 - gap) / cols;
+      const blockH = Math.max(76, Math.min(98, game.height * .16));
+      game.blocks = game.challenge.options.map((label, index) => ({
+        label,
+        correct: index === game.challenge.correctIndex,
+        x: 32 + (index % cols) * (blockW + gap),
+        y: 118 + Math.floor(index / cols) * (blockH + gap),
+        w: blockW,
+        h: blockH,
+        alive: true
+      }));
+      game.ball = { x: game.width * .5, y: game.height - 94, vx: 76 * (Math.random() > .5 ? 1 : -1), vy: -92, r: 10 };
+      game.paddle = { x: game.width * .5 - 105, y: game.height - 42, w: Math.min(240, Math.max(180, game.width * .24)), h: 16 };
+      game.readyAt = performance.now() + 950;
+    }
+
+    function setupMemory() {
+      const cards = shuffle(game.entries.flatMap((entry, index) => [
+        { id: entry.id, side: "latin", text: entry.latin, icon: memoryIcon(index), revealed: false, matched: false },
+        { id: entry.id, side: "meaning", text: entry.meaning, icon: memoryIcon(index), revealed: false, matched: false }
+      ]));
+      game.memory.cards = cards;
+      renderMemory();
+      updateHud();
+    }
+
+    function memoryIcon(index) {
+      const icons = ["🏛️", "📜", "🗡️", "🛡️", "🏺", "🪙", "🦅", "🔥", "🌿", "⚡", "🧭", "🏟️"];
+      return icons[index % icons.length];
+    }
+
+    function renderMemory() {
+      $("#memoryBoard").innerHTML = game.memory.cards.map((card, index) => {
+        const hidden = !card.revealed && !card.matched;
+        return `<button class="memory-card ${hidden ? "hidden" : ""} ${card.matched ? "matched" : ""}" data-card="${index}" data-icon="${card.icon}" type="button">${hidden ? "" : `<span>${card.icon}</span><br>${escapeHTML(card.text)}`}</button>`;
+      }).join("");
+      $$("[data-card]").forEach((button) => button.addEventListener("click", () => flipCard(Number(button.dataset.card))));
+    }
+
+    function flipCard(index) {
+      if (!game || game.type !== "memory" || game.memory.lock) return;
+      const card = game.memory.cards[index];
+      if (!card || card.revealed || card.matched) return;
+      card.revealed = true;
+      playSfx("click");
+      if (game.memory.first === null) {
+        game.memory.first = index;
+      } else {
+        game.memory.second = index;
+        game.memory.moves += 1;
+        const first = game.memory.cards[game.memory.first];
+        if (first.id === card.id && first.side !== card.side) {
+          first.matched = true;
+          card.matched = true;
+          game.correct += 1;
+          game.memory.matched += 1;
+          game.memory.first = null;
+          game.memory.second = null;
+          playSfx("correct");
+          if (game.memory.matched >= game.entries.length) finishRun();
+        } else {
+          game.misses += 1;
+          game.memory.lock = true;
+          playSfx("wrong");
+          setTimeout(() => {
+            first.revealed = false;
+            card.revealed = false;
+            game.memory.first = null;
+            game.memory.second = null;
+            game.memory.lock = false;
+            renderMemory();
+            updateHud();
+          }, 760);
+        }
+      }
+      renderMemory();
+      updateHud();
+    }
+
+    function loop(timestamp) {
+      if (!game || !game.active || game.type === "memory") return;
+      if (!game.lastTime) game.lastTime = timestamp;
+      const delta = Math.min(.033, (timestamp - game.lastTime) / 1000);
+      game.lastTime = timestamp;
+      if (game.type === "flappy") updateFlappy(delta);
+      if (game.type === "breakout") updateBreakout(delta);
+      drawGame();
+      raf = requestAnimationFrame(loop);
+    }
+
+    function updateFlappy(delta) {
+      const b = game.bird;
+      b.vy += 790 * delta;
+      b.y += b.vy * delta;
+      game.obstacleX -= 150 * delta;
+      if (b.y < 24 || b.y > game.height - 24) {
+        b.y = Math.max(24, Math.min(game.height - 24, b.y));
+        b.vy = 0;
+        resolveArcade(false);
+        return;
+      }
+      const pipeW = Math.min(178, Math.max(124, game.width * .17));
+      if (game.obstacleX + pipeW < b.x && !game.challenge.resolved) {
+        const lane = Math.min(3, Math.max(0, Math.floor(b.y / (game.height / 4))));
+        resolveArcade(lane === game.challenge.correctIndex);
+      }
+    }
+
+    function updateBreakout(delta) {
+      const ball = game.ball;
+      const paddle = game.paddle;
+      if (performance.now() < game.readyAt) {
+        ball.x = paddle.x + paddle.w / 2;
+        ball.y = paddle.y - 18;
+        return;
+      }
+      ball.x += ball.vx * delta;
+      ball.y += ball.vy * delta;
+      if (ball.x < ball.r || ball.x > game.width - ball.r) ball.vx *= -1;
+      if (ball.y < ball.r) ball.vy *= -1;
+      if (ball.y > game.height + 18) {
+        game.hearts -= 1;
+        playSfx("wrong");
+        if (game.hearts <= 0) finishRun();
+        else setupBreakoutBlocks();
+        return;
+      }
+      if (ball.x > paddle.x && ball.x < paddle.x + paddle.w && ball.y + ball.r > paddle.y && ball.y - ball.r < paddle.y + paddle.h && ball.vy > 0) {
+        ball.vy *= -1;
+        ball.vx += ((ball.x - (paddle.x + paddle.w / 2)) / paddle.w) * 90;
+        playSfx("click");
+      }
+      for (const block of game.blocks) {
+        if (!block.alive) continue;
+        if (ball.x + ball.r > block.x && ball.x - ball.r < block.x + block.w && ball.y + ball.r > block.y && ball.y - ball.r < block.y + block.h) {
+          block.alive = false;
+          ball.vy *= -1;
+          resolveArcade(block.correct);
+          break;
+        }
+      }
+    }
+
+    function resolveArcade(success) {
+      if (!game || game.challenge.resolved) return;
+      game.challenge.resolved = true;
+      if (success) {
+        game.correct += 1;
+        playSfx("correct");
+        toast(tr("correct"));
+      } else {
+        game.misses += 1;
+        game.hearts -= 1;
+        playSfx("wrong");
+        toast(`${tr("wrong")}: ${game.challenge.entry.latin}`);
+      }
+      updateHud();
+      setTimeout(() => {
+        if (!game || !game.active) return;
+        game.index += 1;
+        if (game.index >= game.entries.length || game.hearts <= 0) finishRun();
+        else nextArcadeChallenge();
+      }, 520);
+    }
+
+    function calculateStars() {
+      if (!game) return 0;
+      if (game.type === "memory") {
+        const perfectMoves = game.entries.length;
+        if (game.misses === 0) return 4;
+        if (game.memory.moves <= perfectMoves + 3) return 3;
+        if (game.memory.moves <= perfectMoves + 8) return 2;
+        return 1;
+      }
+      const accuracy = game.entries.length ? game.correct / game.entries.length : 0;
+      if (accuracy >= .97) return 4;
+      if (accuracy >= .78) return 3;
+      if (accuracy >= .48) return 2;
+      return 1;
+    }
+
+    function finishRun(manual = false) {
+      if (!game || game.finished) return;
+      game.finished = true;
+      game.active = false;
+      cancelAnimationFrame(raf);
+      const stars = manual ? 1 : calculateStars();
+      const oldStars = Number(state.stars[game.lessonNumber]) || 0;
+      const oldReward = rewardForStars(oldStars);
+      const newReward = rewardForStars(stars);
+      const coins = stars > oldStars ? Math.max(0, newReward.coins - oldReward.coins) : 0;
+      const gems = stars > oldStars ? Math.max(0, newReward.gems - oldReward.gems) : 0;
+      if (stars > oldStars) {
+        state.stars[game.lessonNumber] = stars;
+        state.coins += coins;
+        state.gems += gems;
+        saveState();
+      }
+      $("#resultBox").innerHTML = `<strong>${tr("complete")} ${starsHTML(stars)}</strong><div>${tr("reward")}: ${coins} 🪙 ${gems} 💎</div><button class="ghost" id="backPathBtn" type="button">🗺️ ${tr("path")}</button>`;
+      $("#resultBox").classList.add("show");
+      $("#backPathBtn").addEventListener("click", () => showView("path"));
+      playSfx(coins || gems ? "coin" : "finish");
+      renderAll();
+      drawGame();
+    }
+
+    function updateHud() {
+      if (!game) {
+        $("#gameMeta").textContent = "Romulingo";
+        $("#gamePrompt").textContent = `${tr("chooseGame")}`;
+        $("#gameProgress").style.width = "0%";
+        return;
+      }
+      const total = game.entries.length || 1;
+      const current = game.type === "memory" ? game.memory.matched : game.index;
+      $("#gameMeta").textContent = `${tr("lesson")} ${game.lessonNumber} · ${tr(game.type)} · ${Math.min(current + 1, total)} / ${total}`;
+      $("#gamePrompt").textContent = game.type === "memory" ? tr("matched") : `${game.challenge?.prompt || ""}`;
+      $("#gameProgress").style.width = `${Math.min(100, Math.round((current / total) * 100))}%`;
+      $("#hudScore").textContent = game.type === "memory" ? `${game.memory.matched}/${total}` : `${game.correct}/${game.index}`;
+      $("#hudHearts").textContent = game.type === "memory" ? game.misses : "♥".repeat(Math.max(0, game.hearts)) || "0";
+      $("#hudStars").textContent = calculateStars();
+      $("#hudReward").textContent = rewardForStars(calculateStars()).coins;
+    }
+
+    function resizeCanvas() {
+      const canvas = $("#gameCanvas");
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      const width = Math.max(320, rect.width || 960);
+      const height = Math.max(240, rect.height || 540);
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      const ctx = canvas.getContext("2d");
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      if (game) {
+        game.width = width;
+        game.height = height;
+        game.bird.x = width * .2;
+        if (game.type === "breakout") setupBreakoutBlocks();
+      }
+      drawGame();
+    }
+
+    function drawGame() {
+      const canvas = $("#gameCanvas");
+      const ctx = canvas.getContext("2d");
+      const rect = canvas.getBoundingClientRect();
+      const w = game?.width || rect.width || 960;
+      const h = game?.height || rect.height || 540;
+      ctx.clearRect(0, 0, w, h);
+      const sky = ctx.createLinearGradient(0, 0, 0, h);
+      sky.addColorStop(0, "#dff7ff");
+      sky.addColorStop(1, "#fff4d8");
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = "rgba(255,255,255,.68)";
+      for (let i = 0; i < 5; i += 1) {
+        const x = (i * 235 + (game?.obstacleX || 0) * .12) % (w + 170) - 70;
+        const y = 42 + (i % 3) * 44;
+        ctx.beginPath();
+        ctx.ellipse(x, y, 58, 17, 0, 0, Math.PI * 2);
+        ctx.ellipse(x + 40, y + 5, 42, 14, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      if (!game || !game.challenge) {
+        ctx.fillStyle = "#17212b";
+        ctx.font = "900 28px Inter, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("Romulingo", w / 2, h / 2);
+        return;
+      }
+      if (game.type === "flappy") drawFlappy(ctx, w, h);
+      if (game.type === "breakout") drawBreakout(ctx, w, h);
+    }
+
+    function drawFlappy(ctx, w, h) {
+      const laneH = h / 4;
+      ctx.fillStyle = "rgba(32, 196, 111, .15)";
+      for (let lane = 1; lane < 4; lane += 1) ctx.fillRect(0, lane * laneH - 1, w, 2);
+      const pipeW = Math.min(178, Math.max(124, w * .17));
+      for (let lane = 0; lane < 4; lane += 1) {
+        const y = lane * laneH + 9;
+        const gateH = laneH - 18;
+        const x = game.obstacleX;
+        const grad = ctx.createLinearGradient(x, y, x + pipeW, y + gateH);
+        grad.addColorStop(0, "#11a761");
+        grad.addColorStop(1, "#40d989");
+        ctx.fillStyle = grad;
+        roundRect(ctx, x, y, pipeW, gateH, 13);
+        ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,.94)";
+        roundRect(ctx, x + 10, y + 10, pipeW - 20, gateH - 20, 8);
+        ctx.fill();
+        ctx.fillStyle = "#17212b";
+        ctx.font = `${Math.max(11, Math.min(15, w / 64))}px Inter, sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        wrapText(ctx, game.challenge.options[lane], x + pipeW / 2, y + gateH / 2, pipeW - 32, 17, 4);
+      }
+      drawBird(ctx, game.bird.x, game.bird.y, w);
+    }
+
+    function drawBird(ctx, x, y, w) {
+      const s = Math.max(28, Math.min(44, w / 21));
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(Math.max(-.45, Math.min(.45, game.bird.vy / 700)));
+      const body = ctx.createRadialGradient(-s * .15, -s * .2, s * .2, 0, 0, s);
+      body.addColorStop(0, "#ffe68a");
+      body.addColorStop(1, "#f3b63c");
+      ctx.fillStyle = body;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, s, s * .78, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(111, 70, 12, .26)";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.fillStyle = "#fff6ce";
+      ctx.beginPath();
+      ctx.ellipse(-s * .26, s * .08, s * .42, s * .28, -.35, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.save();
+      ctx.rotate(-.22);
+      ctx.fillStyle = "#7a5317";
+      ctx.font = `900 ${Math.max(8, s * .22)}px Inter, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      const wingWord = String(game?.challenge?.entry?.latin || "").replace(/\s+/g, " ").slice(0, 11);
+      ctx.fillText(wingWord, -s * .27, s * .1, s * .72);
+      ctx.restore();
+      ctx.fillStyle = "#17212b";
+      ctx.beginPath();
+      ctx.arc(s * .36, -s * .2, s * .09, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#ef6a4f";
+      ctx.beginPath();
+      ctx.moveTo(s * .77, -s * .17);
+      ctx.lineTo(s * 1.28, 0);
+      ctx.lineTo(s * .77, s * .17);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,.54)";
+      ctx.beginPath();
+      ctx.ellipse(-s * .25, -s * .06, s * .34, s * .18, -.45, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawBreakout(ctx, w, h) {
+      ctx.fillStyle = "#17212b";
+      ctx.font = "900 18px Inter, sans-serif";
+      ctx.textAlign = "center";
+      wrapText(ctx, game.challenge.prompt, w / 2, 36, w - 60, 21, 2);
+      for (const block of game.blocks) {
+        if (!block.alive) continue;
+        const grad = ctx.createLinearGradient(block.x, block.y, block.x + block.w, block.y + block.h);
+        grad.addColorStop(0, "#8057ff");
+        grad.addColorStop(1, "#3b82f6");
+        ctx.fillStyle = grad;
+        roundRect(ctx, block.x, block.y, block.w, block.h, 10);
+        ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,.94)";
+        roundRect(ctx, block.x + 8, block.y + 8, block.w - 16, block.h - 16, 8);
+        ctx.fill();
+        ctx.fillStyle = "#17212b";
+        ctx.font = `${Math.max(12, Math.min(16, w / 70))}px Inter, sans-serif`;
+        wrapText(ctx, block.label, block.x + block.w / 2, block.y + block.h / 2, block.w - 28, 18, 3);
+      }
+      ctx.fillStyle = "#24c46f";
+      roundRect(ctx, game.paddle.x, game.paddle.y, game.paddle.w, game.paddle.h, 8);
+      ctx.fill();
+      ctx.fillStyle = "#f3b63c";
+      ctx.beginPath();
+      ctx.arc(game.ball.x, game.ball.y, game.ball.r, 0, Math.PI * 2);
+      ctx.fill();
+      if (performance.now() < game.readyAt) {
+        ctx.fillStyle = "rgba(23, 33, 43, .72)";
+        ctx.font = "900 22px Inter, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("3 · 2 · 1", w / 2, h - 88);
+      }
+    }
+
+    function wrapText(ctx, text, x, y, maxWidth, lineHeight, maxLines) {
+      const words = String(text || "").split(/\s+/);
+      const lines = [];
+      let line = "";
+      words.forEach((word) => {
+        const test = line ? `${line} ${word}` : word;
+        if (ctx.measureText(test).width > maxWidth && line) {
+          lines.push(line);
+          line = word;
+        } else line = test;
+      });
+      if (line) lines.push(line);
+      const clipped = lines.slice(0, maxLines);
+      if (lines.length > maxLines) clipped[maxLines - 1] = clipped[maxLines - 1].replace(/\s+\S+$/, "") + "...";
+      const startY = y - ((clipped.length - 1) * lineHeight) / 2;
+      clipped.forEach((part, index) => ctx.fillText(part, x, startY + index * lineHeight));
+    }
+
+    function roundRect(ctx, x, y, w, h, r) {
+      const radius = Math.min(r, w / 2, h / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.arcTo(x + w, y, x + w, y + h, radius);
+      ctx.arcTo(x + w, y + h, x, y + h, radius);
+      ctx.arcTo(x, y + h, x, y, radius);
+      ctx.arcTo(x, y, x + w, y, radius);
+      ctx.closePath();
+    }
+
+    function flap() {
+      unlockAudio();
+      if (game?.type === "flappy" && game.active) {
+        game.bird.vy = -345;
+        playSfx("flap");
+      }
+    }
+
+    function movePaddle(clientX) {
+      if (!game || game.type !== "breakout") return;
+      const rect = $("#gameCanvas").getBoundingClientRect();
+      game.paddle.x = Math.max(0, Math.min(game.width - game.paddle.w, clientX - rect.left - game.paddle.w / 2));
+    }
+
+    function unlockAudio() {
+      if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioContext.state === "suspended") audioContext.resume();
+    }
+
+    function playSfx(type) {
+      if (!state.settings.sfx) return;
+      try {
+        unlockAudio();
+        const now = audioContext.currentTime;
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        const map = {
+          click: [360, .04, "sine"], flap: [520, .05, "triangle"], correct: [720, .09, "sine"],
+          wrong: [150, .14, "sawtooth"], coin: [980, .16, "triangle"], start: [440, .08, "sine"], finish: [620, .12, "sine"]
+        };
+        const [freq, dur, wave] = map[type] || map.click;
+        osc.type = wave;
+        osc.frequency.setValueAtTime(freq, now);
+        if (type === "correct" || type === "coin") osc.frequency.exponentialRampToValueAtTime(freq * 1.35, now + dur);
+        if (type === "wrong") osc.frequency.exponentialRampToValueAtTime(80, now + dur);
+        gain.gain.setValueAtTime(.0001, now);
+        gain.gain.exponentialRampToValueAtTime(.16, now + .01);
+        gain.gain.exponentialRampToValueAtTime(.0001, now + dur);
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
+        osc.start(now);
+        osc.stop(now + dur + .02);
+      } catch {}
+    }
+
+    function makeRoomCode() { return String(Math.floor(1000000 + Math.random() * 9000000)); }
+    function peerAvailable() {
+      if (typeof Peer === "undefined") { toast("PeerJS"); return false; }
+      return true;
+    }
+
+    function createRoom(attempt = 0) {
+      if (!peerAvailable()) return;
+      closeHostRoom();
+      const code = makeRoomCode();
+      const peer = new Peer(code);
+      kahoot.hostPeer = peer;
+      kahoot.players.clear();
+      kahoot.hostConnections.clear();
+      peer.on("open", (id) => {
+        $("#roomCode").textContent = id;
+        toast(tr("roomOpen"));
+        renderHostPlayers();
+      });
+      peer.on("connection", (connection) => {
+        kahoot.hostConnections.set(connection.peer, connection);
+        connection.on("data", (message) => handleHostMessage(connection, message));
+        connection.on("close", () => {
+          kahoot.hostConnections.delete(connection.peer);
+          kahoot.players.delete(connection.peer);
+          broadcastLobby();
+          renderHostPlayers();
+        });
+      });
+      peer.on("error", (error) => {
+        if (error?.type === "unavailable-id" && attempt < 6) createRoom(attempt + 1);
+        else toast(error?.message || "PeerJS");
+      });
+    }
+
+    function closeHostRoom() {
+      if (kahoot.hostPeer) kahoot.hostPeer.destroy();
+      kahoot.hostPeer = null;
+      kahoot.hostConnections.clear();
+      kahoot.players.clear();
+      kahoot.hostGame = null;
+    }
+
+    function handleHostMessage(connection, message) {
+      if (!message || typeof message !== "object") return;
+      if (message.type === "join") {
+        const requestedName = basePlayerName(message.player?.name);
+        kahoot.players.set(connection.peer, {
+          id: connection.peer,
+          name: uniquePlayerName(requestedName, connection.peer),
+          avatar: message.player?.avatar || defaultState().avatar,
+          score: 0,
+          answered: false,
+          last: ""
+        });
+        broadcastLobby();
+        renderHostPlayers();
+      }
+      if (message.type === "answer") handleKahootAnswer(connection.peer, message);
+    }
+
+    function basePlayerName(value) {
+      return String(value || "RG-Discipulus").replace(/\s*\(\d+\)\s*$/, "").trim().slice(0, 18) || "RG-Discipulus";
+    }
+
+    function uniquePlayerName(base, currentId) {
+      const used = [...kahoot.players.values()]
+        .filter((player) => player.id !== currentId)
+        .map((player) => player.name.toLowerCase());
+      let candidate = base;
+      let index = 0;
+      while (used.includes(candidate.toLowerCase())) {
+        index += 1;
+        candidate = `${base} (${index})`;
+      }
+      return candidate;
+    }
+
+    function broadcast(type, payload = {}) {
+      kahoot.hostConnections.forEach((connection) => { if (connection.open) connection.send({ type, ...payload }); });
+    }
+
+    function broadcastLobby() { broadcast("lobby", { players: [...kahoot.players.values()] }); }
+    function renderHostPlayers() {
+      const players = [...kahoot.players.values()];
+      $("#hostPlayers").innerHTML = players.length ? players.map((player) => `<div class="player-pill">${avatarHTML(38, player.avatar)}<strong>${escapeHTML(player.name)}</strong></div>`).join("") : `<span class="muted">${tr("noPlayers")}</span>`;
+      renderScoreboard("#hostScoreboard", players);
+    }
+
+    function kahootSourceEntries() {
+      const selected = $("#kahootLessonSelect").value;
+      return selected === "all" ? VOCABULARY : (lessons.get(Number(selected)) || VOCABULARY);
+    }
+
+    function startKahoot() {
+      if (!kahoot.hostPeer) { toast(tr("needRoom")); return; }
+      const source = kahootSourceEntries();
+      kahoot.players.forEach((player) => { player.score = 0; player.answered = false; player.last = ""; });
+      kahoot.hostGame = { index: -1, questions: sample(source, Math.min(8, source.length)).map((entry) => createChallenge(entry, source)), current: null, startedAt: 0 };
+      nextKahootQuestion();
+    }
+
+    function nextKahootQuestion() {
+      const hostGame = kahoot.hostGame;
+      if (!hostGame) { toast(tr("needRoom")); return; }
+      hostGame.index += 1;
+      if (hostGame.index >= hostGame.questions.length) { finishKahoot(); return; }
+      hostGame.current = hostGame.questions[hostGame.index];
+      hostGame.startedAt = Date.now();
+      kahoot.players.forEach((player) => { player.answered = false; player.last = ""; });
+      broadcast("question", publicQuestion(hostGame));
+      renderHostQuestion();
+      renderHostPlayers();
+    }
+
+    function publicQuestion(hostGame) {
+      return { questionId: hostGame.current.id, index: hostGame.index + 1, total: hostGame.questions.length, prompt: hostGame.current.prompt, options: hostGame.current.options };
+    }
+
+    function renderHostQuestion(revealed = false) {
+      const hostGame = kahoot.hostGame;
+      if (!hostGame?.current) { $("#hostQuestionBoard").innerHTML = `<div class="muted">${tr("question")}</div>`; return; }
+      const q = hostGame.current;
+      $("#hostQuestionBoard").innerHTML = `<div class="prompt"><small>${hostGame.index + 1} / ${hostGame.questions.length}</small><strong>${escapeHTML(q.prompt)}</strong></div><div class="kahoot-options">${q.options.map((option, index) => `<button class="answer-btn" type="button">${escapeHTML(option)}${revealed && index === q.correctIndex ? " ✓" : ""}</button>`).join("")}</div>`;
+    }
+
+    function handleKahootAnswer(playerId, message) {
+      const hostGame = kahoot.hostGame;
+      const player = kahoot.players.get(playerId);
+      if (!hostGame?.current || !player || player.answered || message.questionId !== hostGame.current.id) return;
+      player.answered = true;
+      const correct = Number(message.index) === hostGame.current.correctIndex;
+      const elapsed = Math.max(0, Date.now() - hostGame.startedAt);
+      const points = correct ? Math.max(300, 1000 - Math.round(elapsed / 8)) : 0;
+      player.score += points;
+      player.last = correct ? `+${points}` : "0";
+      const connection = kahoot.hostConnections.get(playerId);
+      if (connection?.open) connection.send({ type: "result", correct, correctAnswer: hostGame.current.options[hostGame.current.correctIndex], score: player.score, players: [...kahoot.players.values()] });
+      broadcast("scoreboard", { players: [...kahoot.players.values()] });
+      renderHostPlayers();
+      if ([...kahoot.players.values()].every((candidate) => candidate.answered)) renderHostQuestion(true);
+    }
+
+    function finishKahoot() {
+      const players = [...kahoot.players.values()].sort((a, b) => b.score - a.score);
+      broadcast("finish", { players });
+      $("#hostQuestionBoard").innerHTML = `<div class="prompt"><small>${tr("roundDone")}</small><strong>${players[0] ? `${escapeHTML(players[0].name)} · ${players[0].score}` : tr("roundDone")}</strong></div>`;
+      renderScoreboard("#hostScoreboard", players);
+      kahoot.hostGame = null;
+    }
+
+    function joinRoom() {
+      if (!peerAvailable()) return;
+      const code = $("#joinCode").value.replace(/\D/g, "").slice(0, 7);
+      $("#joinCode").value = code;
+      if (code.length !== 7) { toast(tr("needCode")); return; }
+      if (kahoot.joinPeer) kahoot.joinPeer.destroy();
+      const peer = new Peer();
+      kahoot.joinPeer = peer;
+      $("#joinStatus").textContent = tr("joinWaiting");
+      peer.on("open", () => {
+        const connection = peer.connect(code, { reliable: true });
+        kahoot.joinConnection = connection;
+        connection.on("open", () => {
+          $("#joinStatus").textContent = tr("connected");
+          connection.send({ type: "join", player: { name: state.playerName, avatar: state.avatar } });
+        });
+        connection.on("data", handleJoinMessage);
+        connection.on("close", () => { $("#joinStatus").textContent = tr("joinWaiting"); });
+      });
+      peer.on("error", (error) => toast(error?.message || "PeerJS"));
+    }
+
+    function handleJoinMessage(message) {
+      if (!message || typeof message !== "object") return;
+      if (message.type === "lobby") renderScoreboard("#joinScoreboard", message.players || []);
+      if (message.type === "question") { kahoot.joinQuestion = message; renderJoinQuestion(message); }
+      if (message.type === "result") {
+        $("#joinStatus").textContent = message.correct ? `${tr("correct")} · ${message.score}` : `${tr("wrong")}: ${message.correctAnswer}`;
+        renderScoreboard("#joinScoreboard", message.players || []);
+      }
+      if (message.type === "scoreboard") renderScoreboard("#joinScoreboard", message.players || []);
+      if (message.type === "finish") {
+        const players = message.players || [];
+        $("#joinQuestionBoard").innerHTML = `<div class="prompt"><small>${tr("roundDone")}</small><strong>${players[0] ? `${escapeHTML(players[0].name)} · ${players[0].score}` : tr("roundDone")}</strong></div>`;
+        renderScoreboard("#joinScoreboard", players);
+      }
+    }
+
+    function renderJoinQuestion(question) {
+      $("#joinStatus").textContent = `${question.index} / ${question.total}`;
+      $("#joinQuestionBoard").innerHTML = `<div class="prompt"><small>${tr("question")}</small><strong>${escapeHTML(question.prompt)}</strong></div><div class="kahoot-options">${question.options.map((option, index) => `<button class="answer-btn" data-answer-index="${index}" type="button">${escapeHTML(option)}</button>`).join("")}</div>`;
+      $$("[data-answer-index]", $("#joinQuestionBoard")).forEach((button) => button.addEventListener("click", () => {
+        if (!kahoot.joinConnection?.open || !kahoot.joinQuestion) return;
+        kahoot.joinConnection.send({ type: "answer", questionId: kahoot.joinQuestion.questionId, index: Number(button.dataset.answerIndex) });
+        $$("[data-answer-index]", $("#joinQuestionBoard")).forEach((item) => item.disabled = true);
+        $("#joinStatus").textContent = tr("answerSent");
+      }));
+    }
+
+    function renderScoreboard(selector, players) {
+      const sorted = [...players].sort((a, b) => (b.score || 0) - (a.score || 0));
+      $(selector).innerHTML = sorted.length ? sorted.map((player, index) => `<div class="score-row"><strong>${index + 1}. ${escapeHTML(player.name || "Player")}</strong><span>${player.score || 0} ${player.last ? `(${player.last})` : ""}</span></div>`).join("") : `<div class="muted">${tr("noScores")}</div>`;
+    }
+
+    function escapeHTML(value) {
+      return String(value).replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
+    }
+
+    function toast(message) {
+      const item = document.createElement("div");
+      item.className = "toast-item";
+      item.textContent = message;
+      $("#toast").appendChild(item);
+      setTimeout(() => item.remove(), 2600);
+    }
+
+    function switchKahootTab(tab) {
+      $$("[data-kahoot-tab]").forEach((button) => button.classList.toggle("active", button.dataset.kahootTab === tab));
+      $("#hostPane").classList.toggle("active", tab === "host");
+      $("#joinPane").classList.toggle("active", tab === "join");
+    }
+
+    function setupStartChoices() {
+      const free = AVATAR_ITEMS.filter((item) => item.price === 0);
+      const groups = { face: $("#startFaces"), hat: $("#startHats"), item: $("#startItems") };
+      Object.keys(groups).forEach((type) => {
+        groups[type].innerHTML = free.filter((item) => item.type === type).map((item) => `<button class="choice ${state.avatar[type] === item.id ? "active" : ""}" data-start-choice="${item.id}" type="button">${item.emoji || "—"}</button>`).join("");
+      });
+      $$("[data-start-choice]").forEach((button) => button.addEventListener("click", () => {
+        const item = itemById(button.dataset.startChoice);
+        state.avatar[item.type] = item.id;
+        setupStartChoices();
+        playSfx("click");
+      }));
+    }
+
+    function saveProfileName(value, started = false) {
+      state.playerName = (value || "RG-Discipulus").trim().slice(0, 18) || "RG-Discipulus";
+      if (started) state.started = true;
+      saveState();
+      renderAll();
+      toast(tr("profileSaved"));
+    }
+
+    function bindEvents() {
+      document.addEventListener("pointerdown", unlockAudio, { once: true });
+      $$(".nav-btn").forEach((button) => button.addEventListener("click", () => showView(button.dataset.view)));
+      $("#profileTop").addEventListener("click", () => showView("avatar"));
+      $("#settingsBtn").addEventListener("click", () => $("#settingsMenu").classList.toggle("show"));
+      $("#langTop").addEventListener("click", toggleLang);
+      $("#languageSwitch").addEventListener("click", toggleLang);
+      $("#sfxToggle").addEventListener("click", () => { state.settings.sfx = !state.settings.sfx; saveState(); applyTheme(); playSfx("click"); });
+      $("#themeToggle").addEventListener("click", () => { state.settings.theme = state.settings.theme === "dark" ? "light" : "dark"; saveState(); applyTheme(); });
+      $("#resetBtn").addEventListener("click", () => {
+        if (!confirm("Reset Romulingo?")) return;
+        state = defaultState();
+        state.started = true;
+        saveState();
+        applyTheme();
+        applyLanguage();
+        toast(tr("demoReset"));
+      });
+      $("#startSelectedGame").addEventListener("click", () => {
+        const lessonNumber = Number($("#lessonSelect").value);
+        startGame(lessonNumber, gameForLesson(lessonNumber));
+      });
+      $("#flapBtn").addEventListener("click", flap);
+      $("#endGameBtn").addEventListener("click", () => finishRun(true));
+      $("#gameCanvas").addEventListener("pointerdown", (event) => { flap(); movePaddle(event.clientX); });
+      $("#gameCanvas").addEventListener("pointermove", (event) => movePaddle(event.clientX));
+      window.addEventListener("keydown", (event) => {
+        if (event.code === "Space" || event.code === "ArrowUp") { event.preventDefault(); flap(); }
+        if (event.code === "ArrowLeft" && game?.type === "breakout") game.paddle.x = Math.max(0, game.paddle.x - 34);
+        if (event.code === "ArrowRight" && game?.type === "breakout") game.paddle.x = Math.min(game.width - game.paddle.w, game.paddle.x + 34);
+      });
+      window.addEventListener("resize", resizeCanvas);
+      $("#saveNameBtn").addEventListener("click", () => saveProfileName($("#nameInput").value));
+      $("#startProfileBtn").addEventListener("click", () => {
+        saveProfileName($("#startName").value, true);
+        $("#startModal").classList.remove("show");
+      });
+      $("#avatarFromKahoot").addEventListener("click", () => showView("avatar"));
+      $$("[data-kahoot-tab]").forEach((button) => button.addEventListener("click", () => switchKahootTab(button.dataset.kahootTab)));
+      $("#createRoomBtn").addEventListener("click", createRoom);
+      $("#startKahootBtn").addEventListener("click", startKahoot);
+      $("#nextQuestionBtn").addEventListener("click", nextKahootQuestion);
+      $("#joinRoomBtn").addEventListener("click", joinRoom);
+      $("#joinCode").addEventListener("input", () => { $("#joinCode").value = $("#joinCode").value.replace(/\D/g, "").slice(0, 7); });
+    }
+
+    function toggleLang() {
+      state.lang = state.lang === "en" ? "de" : "en";
+      saveState();
+      applyLanguage();
+      playSfx("click");
+    }
+
+    function init() {
+      bindEvents();
+      applyTheme();
+      setupStartChoices();
+      applyLanguage();
+      resizeCanvas();
+      if (!state.started) {
+        $("#startName").value = state.playerName || "";
+        $("#startModal").classList.add("show");
+      }
+      setTimeout(() => $("#loadingScreen").classList.add("hide"), 850);
+    }
+
+    init();
+  </script>
+</body>
+</html>
