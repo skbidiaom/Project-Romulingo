@@ -10,33 +10,40 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
   <style>
     :root {
-      --bg: #f4fbf2;
-      --bg2: #eef7ff;
-      --ink: #17212b;
-      --muted: #657382;
-      --panel: rgba(255, 255, 255, .94);
-      --line: #dce7e1;
-      --soft: #f4f8f6;
-      --green: #24c46f;
-      --green2: #11a761;
+      --bg: #f8fff6;
+      --bg2: #ffffff;
+      --ink: #11130f;
+      --muted: #5d695b;
+      --panel: rgba(255, 255, 255, .96);
+      --line: #d8e5d4;
+      --soft: #f4fbf1;
+      --green: #78bf00;
+      --green2: #24c46f;
+      --red: #ed171f;
+      --red2: #b90f18;
+      --black: #101010;
+      --white: #ffffff;
       --blue: #3b82f6;
       --gold: #f3b63c;
       --gem: #60a5fa;
-      --bad: #ef5f6f;
+      --bad: #ed171f;
       --purple: #8057ff;
-      --shadow: 0 18px 42px rgba(22, 32, 43, .12);
-      --soft-shadow: 0 10px 24px rgba(22, 32, 43, .08);
+      --shadow: 0 22px 52px rgba(16, 16, 16, .14);
+      --soft-shadow: 0 12px 26px rgba(16, 16, 16, .08);
       --radius: 8px;
     }
 
     body[data-theme="dark"] {
-      --bg: #101820;
-      --bg2: #172331;
-      --ink: #f3f7f5;
-      --muted: #a8b5c0;
-      --panel: rgba(25, 35, 45, .95);
-      --line: #314252;
-      --soft: #1e2a35;
+      --bg: #080a08;
+      --bg2: #141914;
+      --ink: #f8faf5;
+      --muted: #b7c0b3;
+      --panel: rgba(17, 20, 16, .96);
+      --line: #2f3b2a;
+      --soft: #151d13;
+      --green: #8fd51d;
+      --red: #ff3340;
+      --red2: #c91621;
       --shadow: 0 18px 42px rgba(0, 0, 0, .35);
       --soft-shadow: 0 10px 24px rgba(0, 0, 0, .25);
     }
@@ -52,8 +59,10 @@
       margin: 0;
       color: var(--ink);
       background:
-        radial-gradient(circle at 18% 8%, rgba(36, 196, 111, .13), transparent 28%),
-        radial-gradient(circle at 82% 12%, rgba(59, 130, 246, .13), transparent 30%),
+        linear-gradient(90deg, var(--green) 0 30%, var(--white) 30% 70%, var(--red) 70% 100%) top / 100% 6px no-repeat,
+        linear-gradient(180deg, color-mix(in srgb, var(--green), transparent 88%), transparent 340px),
+        repeating-linear-gradient(90deg, color-mix(in srgb, var(--black), transparent 96%) 0 1px, transparent 1px 78px),
+        repeating-linear-gradient(0deg, color-mix(in srgb, var(--black), transparent 97%) 0 1px, transparent 1px 78px),
         linear-gradient(180deg, var(--bg), var(--bg2));
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       letter-spacing: 0;
@@ -83,8 +92,12 @@
       position: fixed;
       inset: 0;
       z-index: 999;
+      width: 100vw;
+      min-height: 100vh;
+      min-height: 100dvh;
       display: grid;
       place-items: center;
+      place-content: center;
       gap: 20px;
       padding: 24px;
       background: #fff;
@@ -141,10 +154,36 @@
       to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
+    @media (max-width: 660px) {
+      .loading-screen {
+        min-height: 100vh;
+        min-height: 100dvh;
+        padding:
+          max(16px, env(safe-area-inset-top, 0px))
+          max(16px, env(safe-area-inset-right, 0px))
+          max(16px, env(safe-area-inset-bottom, 0px))
+          max(16px, env(safe-area-inset-left, 0px));
+      }
+
+      .loading-stack {
+        width: min(380px, 100%);
+      }
+
+      .loading-stack img {
+        width: min(360px, 88vw);
+        height: min(380px, 58vh);
+        height: min(380px, 58dvh);
+        max-height: none;
+        object-fit: cover;
+        object-position: center top;
+      }
+    }
+
     .topbar {
       position: sticky;
       top: 0;
       z-index: 50;
+      isolation: isolate;
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(160px, 320px) minmax(0, 1fr);
       align-items: center;
@@ -152,9 +191,24 @@
       min-height: 84px;
       padding: 16px clamp(10px, 3vw, 28px) 10px;
       text-align: center;
-      background: color-mix(in srgb, var(--panel), transparent 8%);
-      border-bottom: 1px solid color-mix(in srgb, var(--line), transparent 18%);
+      background:
+        linear-gradient(90deg, color-mix(in srgb, var(--green), transparent 86%), transparent 34%, transparent 66%, color-mix(in srgb, var(--red), transparent 86%)),
+        color-mix(in srgb, var(--panel), transparent 5%);
+      border-bottom: 1px solid color-mix(in srgb, var(--line), var(--black) 6%);
+      box-shadow: 0 10px 28px rgba(16, 16, 16, .08);
       backdrop-filter: blur(18px);
+    }
+
+    .topbar::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--green), var(--white) 50%, var(--red));
+      pointer-events: none;
+      z-index: 0;
     }
 
     .brand {
@@ -215,9 +269,10 @@
       width: 42px;
       height: 42px;
       border-radius: var(--radius);
-      color: #fff;
-      background: linear-gradient(135deg, var(--green), var(--blue));
-      box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .12);
+      color: var(--black);
+      background: linear-gradient(135deg, var(--green), var(--white) 48%, var(--red));
+      border: 1px solid color-mix(in srgb, var(--black), transparent 84%);
+      box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .12), 0 8px 18px color-mix(in srgb, var(--green), transparent 70%);
       font-weight: 950;
     }
 
@@ -238,10 +293,11 @@
       gap: 6px;
       min-height: 38px;
       padding: 0 10px;
-      border: 1px solid var(--line);
+      border: 1px solid color-mix(in srgb, var(--line), var(--green) 20%);
       border-radius: var(--radius);
-      background: var(--soft);
+      background: linear-gradient(180deg, color-mix(in srgb, var(--panel), var(--white) 20%), var(--soft));
       font-weight: 900;
+      box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--green), transparent 82%);
     }
 
     .profile-top {
@@ -250,9 +306,9 @@
       gap: 8px;
       min-height: 42px;
       padding: 0 10px;
-      border: 1px solid var(--line);
+      border: 1px solid color-mix(in srgb, var(--line), var(--red) 16%);
       border-radius: var(--radius);
-      background: var(--panel);
+      background: linear-gradient(180deg, color-mix(in srgb, var(--panel), var(--white) 16%), var(--panel));
       color: var(--ink);
       box-shadow: var(--soft-shadow);
       font-weight: 900;
@@ -274,7 +330,7 @@
       font-size: 11px;
       font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: .08em;
+      letter-spacing: 0;
       pointer-events: none;
     }
 
@@ -299,10 +355,11 @@
     .side .profile-card { display: none; }
 
     .panel, .view, .modal-card, .settings-menu, .path-node, .shop-item, .score-row, .player-pill, .game-picker {
-      background: var(--panel);
-      border: 1px solid var(--line);
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--panel), var(--white) 18%), var(--panel));
+      border: 1px solid color-mix(in srgb, var(--line), var(--green) 12%);
       border-radius: var(--radius);
-      box-shadow: var(--soft-shadow);
+      box-shadow: var(--soft-shadow), inset 0 1px 0 color-mix(in srgb, var(--white), transparent 18%);
     }
 
     .panel { padding: 14px; }
@@ -323,24 +380,38 @@
     }
 
     .wallet-chip {
-      background: var(--soft);
-      border: 1px solid var(--line);
+      background: linear-gradient(180deg, color-mix(in srgb, var(--panel), var(--white) 14%), var(--soft));
+      border: 1px solid color-mix(in srgb, var(--line), var(--green) 14%);
       justify-content: flex-start;
+      box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--green), transparent 86%);
     }
 
     .nav {
       pointer-events: auto;
+      position: relative;
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 6px;
       width: min(620px, 100%);
       margin: 0 auto;
       padding: 7px;
-      border: 1px solid var(--line);
+      overflow: hidden;
+      border: 1px solid color-mix(in srgb, var(--line), var(--black) 10%);
       border-radius: 16px;
-      background: color-mix(in srgb, var(--panel), transparent 4%);
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--panel), var(--white) 18%), transparent),
+        color-mix(in srgb, var(--panel), transparent 3%);
       box-shadow: var(--shadow);
       backdrop-filter: blur(18px);
+    }
+
+    .nav::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      height: 4px;
+      background: linear-gradient(90deg, var(--green), var(--white), var(--red));
+      pointer-events: none;
     }
 
     .nav-btn {
@@ -348,7 +419,8 @@
       justify-content: flex-start;
       width: 100%;
       color: var(--muted);
-      background: color-mix(in srgb, var(--panel), transparent 10%);
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--panel), var(--white) 14%), color-mix(in srgb, var(--panel), transparent 10%));
       border: 1px solid transparent;
       min-height: 58px;
       flex-direction: column;
@@ -359,9 +431,11 @@
 
     .nav-btn.active {
       color: var(--ink);
-      border-color: var(--line);
-      background: var(--panel);
-      box-shadow: var(--soft-shadow);
+      border-color: color-mix(in srgb, var(--green), var(--red) 20%);
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--green), transparent 86%), color-mix(in srgb, var(--red), transparent 90%)),
+        var(--panel);
+      box-shadow: var(--soft-shadow), inset 0 0 0 1px color-mix(in srgb, var(--white), transparent 18%);
     }
 
     .nav-btn.active::after {
@@ -372,21 +446,50 @@
       bottom: 5px;
       height: 4px;
       border-radius: 999px;
-      background: linear-gradient(90deg, var(--green), var(--blue));
+      background: linear-gradient(90deg, var(--green), var(--white) 50%, var(--red));
     }
 
     .primary {
       color: #fff;
-      background: linear-gradient(135deg, var(--green), var(--green2));
-      box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .13), var(--soft-shadow);
+      background: linear-gradient(135deg, var(--green), var(--green2) 58%, var(--red));
+      box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .16), 0 10px 22px color-mix(in srgb, var(--green), transparent 72%);
     }
 
-    .ghost { color: var(--ink); background: var(--panel); border: 1px solid var(--line); }
-    .danger { color: #fff; background: var(--bad); }
-    .tiny-btn { min-height: 36px; padding: 0 10px; background: var(--soft); color: var(--ink); border: 1px solid var(--line); }
+    .ghost {
+      color: var(--ink);
+      background: linear-gradient(180deg, color-mix(in srgb, var(--panel), var(--white) 14%), var(--panel));
+      border: 1px solid color-mix(in srgb, var(--line), var(--green) 14%);
+      box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--black), transparent 94%);
+    }
+    .danger {
+      color: #fff;
+      background: linear-gradient(135deg, var(--red), var(--red2));
+      box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .18), 0 10px 20px color-mix(in srgb, var(--red), transparent 74%);
+    }
+    .tiny-btn {
+      min-height: 36px;
+      padding: 0 10px;
+      background: linear-gradient(180deg, color-mix(in srgb, var(--panel), var(--white) 18%), var(--soft));
+      color: var(--ink);
+      border: 1px solid color-mix(in srgb, var(--line), var(--black) 10%);
+      box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--green), transparent 84%);
+    }
 
     .main { min-width: 0; display: grid; gap: 16px; }
-    .view { display: none; padding: clamp(14px, 2vw, 24px); }
+    .view {
+      position: relative;
+      display: none;
+      overflow: hidden;
+      padding: clamp(14px, 2vw, 24px);
+    }
+    .view::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      height: 5px;
+      background: linear-gradient(90deg, var(--green), var(--white) 50%, var(--red));
+      pointer-events: none;
+    }
     .view.active { display: block; animation: viewIn .28s ease both; }
     .view-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
     h1, h2, h3, p { margin: 0; }
@@ -404,10 +507,23 @@
     }
 
     .summary > div {
+      position: relative;
+      overflow: hidden;
       padding: 12px;
       border-radius: var(--radius);
-      background: var(--soft);
-      border: 1px solid var(--line);
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--green), transparent 90%), transparent 54%),
+        var(--soft);
+      border: 1px solid color-mix(in srgb, var(--line), var(--green) 14%);
+      box-shadow: inset 4px 0 0 var(--green);
+    }
+
+    .summary > div:nth-child(even) {
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--red), transparent 91%), transparent 56%),
+        var(--soft);
+      border-color: color-mix(in srgb, var(--line), var(--red) 16%);
+      box-shadow: inset 4px 0 0 var(--red);
     }
 
     .summary b { display: block; font-size: 24px; line-height: 1; }
@@ -422,6 +538,7 @@
       min-height: 62px;
       overflow: visible;
       text-align: center;
+      color: var(--ink);
     }
 
     .hero-logo img {
@@ -433,13 +550,35 @@
       pointer-events: none;
     }
 
+    .hero-logo span {
+      font-weight: 950;
+      color: var(--ink);
+      text-shadow: 2px 2px 0 color-mix(in srgb, var(--green), transparent 76%);
+    }
+
     .path {
       position: relative;
+      isolation: isolate;
       display: grid;
       gap: 4px;
       max-width: 960px;
       margin: 0 auto;
       padding: 24px 0 26px;
+    }
+
+    .path::before {
+      content: "";
+      position: absolute;
+      top: 16px;
+      bottom: 16px;
+      left: 50%;
+      width: 12px;
+      transform: translateX(-50%);
+      border-radius: 999px;
+      background: linear-gradient(180deg, color-mix(in srgb, var(--green), transparent 78%), color-mix(in srgb, var(--red), transparent 82%));
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--white), transparent 36%);
+      pointer-events: none;
+      z-index: 0;
     }
 
     .path-lines {
@@ -488,12 +627,23 @@
       padding: 0;
       border-radius: 50%;
       color: #fff;
-      background: linear-gradient(135deg, var(--green), var(--blue));
+      background: linear-gradient(135deg, var(--green), var(--green2) 52%, var(--red));
       border: 5px solid color-mix(in srgb, #fff, transparent 10%);
-      box-shadow: inset 0 -8px 0 rgba(0, 0, 0, .14), 0 16px 26px rgba(36, 196, 111, .24);
+      box-shadow: inset 0 -8px 0 rgba(0, 0, 0, .16), 0 16px 26px color-mix(in srgb, var(--green), transparent 72%);
       font-size: 30px;
       font-weight: 950;
       animation: nodeFloat 2.8s ease-in-out infinite;
+    }
+
+    .path-node::before {
+      content: "";
+      position: absolute;
+      inset: -11px;
+      z-index: -1;
+      border-radius: 50%;
+      background: conic-gradient(from 200deg, var(--green), var(--white), var(--red), var(--green));
+      opacity: .34;
+      filter: blur(.2px);
     }
 
     .path-step:nth-child(3n) .path-node { animation-delay: -.7s; }
@@ -501,18 +651,36 @@
     .path-node:disabled { opacity: 1; filter: none; }
     .path-node:not(:disabled):hover { transform: translateY(-4px) scale(1.04); }
 
-    .path-node.retry { background: linear-gradient(135deg, var(--gold), #ef7e44); }
+    .path-node.retry { background: linear-gradient(135deg, var(--red), #ff8a48); }
     .path-node.done { background: linear-gradient(135deg, #18b66a, #0e8a54); }
     .path-node.locked { background: linear-gradient(135deg, #a8b3bd, #798591); box-shadow: inset 0 -7px 0 rgba(0, 0, 0, .12); }
+    .path-node.locked::before { opacity: .1; filter: grayscale(1); }
     .path-label {
+      position: relative;
+      overflow: hidden;
       min-width: 0;
       max-width: 170px;
       padding: 10px 12px;
       border-radius: var(--radius);
-      background: color-mix(in srgb, var(--panel), transparent 10%);
-      border: 1px solid color-mix(in srgb, var(--line), transparent 22%);
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--green), transparent 92%), transparent 62%),
+        color-mix(in srgb, var(--panel), transparent 8%);
+      border: 1px solid color-mix(in srgb, var(--line), var(--green) 16%);
       box-shadow: var(--soft-shadow);
       animation: softIn .35s ease both;
+    }
+
+    .path-label::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 4px;
+      background: linear-gradient(180deg, var(--green), var(--red));
+    }
+
+    .path-step.right .path-label::before {
+      left: auto;
+      right: 0;
     }
     .path-label strong { display: block; font-size: 18px; }
     .stars { color: #c4cec8; font-size: 16px; letter-spacing: 0; }
@@ -525,10 +693,12 @@
       gap: 8px;
       min-height: 48px;
       padding: 7px 10px;
-      border: 1px solid var(--line);
+      border: 1px solid color-mix(in srgb, var(--line), var(--red) 14%);
       border-radius: 999px;
-      background: var(--panel);
-      box-shadow: var(--soft-shadow);
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--red), transparent 90%), color-mix(in srgb, var(--green), transparent 92%)),
+        var(--panel);
+      box-shadow: var(--soft-shadow), inset 0 -2px 0 color-mix(in srgb, var(--red), transparent 86%);
       font-weight: 950;
       animation: rewardPulse 2.2s ease-in-out infinite;
     }
@@ -536,10 +706,11 @@
     .reward-line {
       position: absolute;
       top: 50%;
-      width: 120px;
-      height: 50px;
+      width: 60px;
+      height: 36px;
       pointer-events: none;
       overflow: visible;
+      z-index: 1;
     }
     .reward-line path {
       fill: none;
@@ -550,10 +721,13 @@
       animation: pathDash 1.8s linear infinite;
     }
     .path-step.left .reward-line,
-    .path-step.center .reward-line { right: 100%; transform: translateY(-50%); }
-    .path-step.right .reward-line { left: 100%; transform: translateY(-50%) scaleX(-1); }
+    .path-step.center .reward-line { left: calc(50% + 46px); transform: translateY(-50%); }
+    .path-step.right .reward-line { right: calc(50% + 46px); transform: translateY(-50%) scaleX(-1); }
     @media (max-width: 720px) {
-      .reward-line { width: 70px; height: 40px; }
+      .reward-line { width: 32px; height: 28px; }
+      .path-step.left .reward-line,
+      .path-step.center .reward-line { left: calc(50% + 34px); }
+      .path-step.right .reward-line { right: calc(50% + 34px); }
     }
 
     .reward-icon {
@@ -612,6 +786,214 @@
       align-items: start;
     }
 
+    .games-lobby {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .games-hero {
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(250px, 360px);
+      gap: 16px;
+      align-items: end;
+      padding: 18px;
+      border: 1px solid color-mix(in srgb, var(--line), var(--green) 14%);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(120deg, color-mix(in srgb, var(--green), transparent 78%), transparent 44%),
+        linear-gradient(300deg, color-mix(in srgb, var(--red), transparent 84%), transparent 42%),
+        var(--panel);
+      box-shadow: var(--soft-shadow), inset 0 1px 0 color-mix(in srgb, var(--white), transparent 18%);
+    }
+
+    .games-hero::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      height: 5px;
+      background: linear-gradient(90deg, var(--green), var(--white), var(--red));
+    }
+
+    .games-copy {
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .games-kicker {
+      justify-self: start;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: var(--black);
+      color: var(--white);
+      font-size: 12px;
+      font-weight: 950;
+      text-transform: uppercase;
+    }
+
+    .games-copy p {
+      max-width: 620px;
+      color: var(--muted);
+      font-weight: 850;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+
+    .games-controls {
+      display: grid;
+      gap: 8px;
+      align-content: end;
+      min-width: 0;
+    }
+
+    .games-controls label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 950;
+      text-transform: uppercase;
+    }
+
+    .games-controls-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .game-mode-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .game-mode-card {
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      min-height: 110px;
+      padding: 12px;
+      text-align: left;
+      color: var(--ink);
+      background:
+        linear-gradient(145deg, color-mix(in srgb, var(--panel), var(--white) 14%), var(--panel));
+      border: 1px solid color-mix(in srgb, var(--line), var(--black) 8%);
+      border-radius: var(--radius);
+      box-shadow: var(--soft-shadow);
+      white-space: normal;
+    }
+
+    .game-mode-card::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      height: 4px;
+      background: linear-gradient(90deg, var(--green), var(--white), var(--red));
+      opacity: .5;
+    }
+
+    .game-mode-card.active {
+      border-color: color-mix(in srgb, var(--green), var(--red) 20%);
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--green), transparent 82%), color-mix(in srgb, var(--red), transparent 90%)),
+        var(--panel);
+      box-shadow: 0 16px 30px color-mix(in srgb, var(--green), transparent 76%), inset 0 0 0 1px color-mix(in srgb, var(--white), transparent 14%);
+    }
+
+    .game-mode-icon {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, var(--green), var(--black) 52%, var(--red));
+      color: var(--white);
+      font-size: 14px;
+      font-weight: 950;
+      box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .18);
+    }
+
+    .game-mode-card strong,
+    .game-mode-card small {
+      display: block;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .game-mode-card strong {
+      font-size: 15px;
+      line-height: 1.1;
+    }
+
+    .game-mode-card small {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.25;
+    }
+
+    .game-mode-badge {
+      position: absolute;
+      right: 8px;
+      bottom: 8px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: var(--black);
+      color: var(--white);
+      font-size: 10px;
+      font-style: normal;
+      font-weight: 950;
+    }
+
+    .game-stat-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .game-stat-strip > div {
+      position: relative;
+      overflow: hidden;
+      min-height: 70px;
+      padding: 10px 12px;
+      border-radius: var(--radius);
+      border: 1px solid color-mix(in srgb, var(--line), var(--green) 12%);
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--green), transparent 90%), transparent 60%),
+        var(--soft);
+      box-shadow: inset 4px 0 0 var(--green);
+    }
+
+    .game-stat-strip > div:nth-child(even) {
+      border-color: color-mix(in srgb, var(--line), var(--red) 12%);
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--red), transparent 92%), transparent 60%),
+        var(--soft);
+      box-shadow: inset 4px 0 0 var(--red);
+    }
+
+    .game-stat-strip span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 950;
+      text-transform: uppercase;
+    }
+
+    .game-stat-strip b {
+      display: block;
+      margin-top: 4px;
+      font-size: 20px;
+      line-height: 1;
+      overflow-wrap: anywhere;
+    }
+
     .game-layout.flappy-mode {
       grid-template-columns: minmax(0, 1fr);
     }
@@ -620,14 +1002,31 @@
       display: none;
     }
 
-    .game-card { display: grid; gap: 10px; }
+    .game-card {
+      position: relative;
+      display: grid;
+      gap: 10px;
+      min-width: 0;
+    }
     .prompt {
+      position: relative;
+      overflow: hidden;
       display: grid;
       gap: 6px;
       padding: 12px 14px;
-      border: 1px solid var(--line);
+      border: 1px solid color-mix(in srgb, var(--line), var(--green) 14%);
       border-radius: var(--radius);
-      background: var(--panel);
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--green), transparent 88%), transparent 58%),
+        var(--panel);
+    }
+
+    .prompt::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      height: 4px;
+      background: linear-gradient(90deg, var(--green), var(--white), var(--red));
     }
 
     .prompt small {
@@ -635,20 +1034,21 @@
       font-size: 12px;
       font-weight: 900;
       text-transform: uppercase;
-      letter-spacing: .08em;
+      letter-spacing: 0;
     }
 
     .prompt strong { font-size: clamp(18px, 2.1vw, 25px); overflow-wrap: anywhere; }
-    .progress { height: 12px; overflow: hidden; border-radius: 999px; background: var(--soft); border: 1px solid var(--line); }
-    .progress span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--green), var(--gold)); transition: width .2s ease; }
+    .progress { height: 12px; overflow: hidden; border-radius: 999px; background: var(--soft); border: 1px solid color-mix(in srgb, var(--line), var(--black) 8%); }
+    .progress span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--green), var(--white), var(--red)); transition: width .2s ease; }
 
     .canvas-wrap {
       position: relative;
       overflow: hidden;
-      border: 1px solid var(--line);
+      border: 1px solid color-mix(in srgb, var(--line), var(--green) 16%);
       border-radius: var(--radius);
-      background: #dff5ff;
-      box-shadow: var(--soft-shadow);
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--green), var(--panel) 86%), color-mix(in srgb, var(--red), var(--panel) 90%));
+      box-shadow: var(--soft-shadow), inset 0 0 0 1px color-mix(in srgb, var(--white), transparent 30%);
     }
 
     canvas {
@@ -665,9 +1065,11 @@
       gap: 10px;
       min-height: 430px;
       padding: 12px;
-      border: 1px solid var(--line);
+      border: 1px solid color-mix(in srgb, var(--line), var(--green) 12%);
       border-radius: var(--radius);
-      background: linear-gradient(180deg, color-mix(in srgb, var(--panel), white 8%), var(--soft));
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--green), transparent 90%), color-mix(in srgb, var(--red), transparent 94%)),
+        linear-gradient(180deg, color-mix(in srgb, var(--panel), var(--white) 8%), var(--soft));
       animation: softIn .32s ease both;
     }
 
@@ -675,8 +1077,9 @@
       min-height: 86px;
       padding: 10px;
       border-radius: var(--radius);
-      border: 1px solid var(--line);
-      background: var(--panel);
+      border: 1px solid color-mix(in srgb, var(--line), var(--green) 10%);
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--panel), var(--white) 10%), var(--panel));
       color: var(--ink);
       font-weight: 900;
       line-height: 1.25;
@@ -685,9 +1088,9 @@
       animation: cardRise .28s ease both;
     }
 
-    .memory-card.hidden { color: transparent; background: linear-gradient(135deg, var(--purple), var(--blue)); }
+    .memory-card.hidden { color: transparent; background: linear-gradient(135deg, var(--green), var(--black) 50%, var(--red)); }
     .memory-card.hidden::before { content: attr(data-icon); color: #fff; font-size: 30px; }
-    .memory-card.matched { background: color-mix(in srgb, var(--green), white 82%); color: var(--ink); opacity: .72; transform: scale(.96); }
+    .memory-card.matched { background: color-mix(in srgb, var(--green), var(--white) 82%); color: var(--ink); opacity: .78; transform: scale(.96); }
 
     @keyframes cardRise {
       from { opacity: 0; transform: translateY(6px) rotateX(10deg); }
@@ -695,10 +1098,16 @@
     }
 
     .hud-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
-    .hud-cell { padding: 10px; border-radius: var(--radius); background: var(--soft); border: 1px solid var(--line); }
+    .hud-cell {
+      padding: 10px;
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, color-mix(in srgb, var(--panel), var(--white) 12%), var(--soft));
+      border: 1px solid color-mix(in srgb, var(--line), var(--green) 12%);
+      box-shadow: inset 3px 0 0 color-mix(in srgb, var(--green), transparent 20%);
+    }
     .hud-cell b { display: block; font-size: 24px; line-height: 1; }
     .hud-cell span { color: var(--muted); font-size: 12px; font-weight: 850; }
-    .result { display: none; margin-top: 10px; padding: 14px; border-radius: var(--radius); background: var(--soft); border: 1px solid var(--line); }
+    .result { display: none; margin-top: 10px; padding: 14px; border-radius: var(--radius); background: linear-gradient(135deg, color-mix(in srgb, var(--green), transparent 90%), var(--soft)); border: 1px solid color-mix(in srgb, var(--line), var(--green) 12%); }
     .result.show { display: grid; gap: 10px; }
 
     .shop-grid {
@@ -708,13 +1117,33 @@
     }
 
     .shop-item {
+      position: relative;
+      overflow: hidden;
       display: grid;
       gap: 10px;
       padding: 13px;
     }
 
+    .shop-item::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      height: 4px;
+      background: linear-gradient(90deg, var(--green), var(--white), var(--red));
+    }
+
     .shop-emoji { font-size: 38px; line-height: 1; }
-    .avatar-preview { display: grid; place-items: center; min-height: 230px; background: var(--soft); border: 1px dashed var(--line); border-radius: var(--radius); }
+    .avatar-preview {
+      display: grid;
+      place-items: center;
+      min-height: 230px;
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--green), transparent 88%), color-mix(in srgb, var(--red), transparent 92%)),
+        repeating-linear-gradient(45deg, transparent 0 12px, color-mix(in srgb, var(--black), transparent 96%) 12px 13px),
+        var(--soft);
+      border: 1px dashed color-mix(in srgb, var(--line), var(--green) 18%);
+      border-radius: var(--radius);
+    }
     .emoji-avatar {
       position: relative;
       width: var(--size, 94px);
@@ -751,33 +1180,39 @@
 
     .form-grid { display: grid; gap: 10px; }
     .field { display: grid; gap: 6px; }
-    .field label { color: var(--muted); font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; }
+    .field label { color: var(--muted); font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 0; }
     .field input, .field select {
       min-height: 42px;
       width: 100%;
       padding: 0 12px;
-      border: 1px solid var(--line);
+      border: 1px solid color-mix(in srgb, var(--line), var(--green) 10%);
       border-radius: var(--radius);
-      background: var(--panel);
+      background: linear-gradient(180deg, color-mix(in srgb, var(--panel), var(--white) 12%), var(--panel));
       color: var(--ink);
       font-weight: 800;
     }
 
+    .field input:focus, .field select:focus {
+      outline: 3px solid color-mix(in srgb, var(--green), transparent 78%);
+      border-color: color-mix(in srgb, var(--green), var(--red) 12%);
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--red), transparent 78%);
+    }
+
     .split { display: grid; grid-template-columns: 292px minmax(0, 1fr); gap: 14px; }
-    .seg { display: flex; gap: 6px; padding: 5px; border-radius: var(--radius); background: var(--soft); border: 1px solid var(--line); }
+    .seg { display: flex; gap: 6px; padding: 5px; border-radius: var(--radius); background: linear-gradient(180deg, color-mix(in srgb, var(--panel), var(--white) 12%), var(--soft)); border: 1px solid color-mix(in srgb, var(--line), var(--green) 12%); }
     .seg button { flex: 1; min-height: 36px; border-radius: 6px; background: transparent; color: var(--muted); font-weight: 900; }
-    .seg button.active { color: var(--ink); background: var(--panel); box-shadow: var(--soft-shadow); }
+    .seg button.active { color: var(--ink); background: linear-gradient(135deg, color-mix(in srgb, var(--green), transparent 86%), color-mix(in srgb, var(--red), transparent 92%)), var(--panel); box-shadow: var(--soft-shadow), inset 0 -3px 0 color-mix(in srgb, var(--green), transparent 74%); }
     .kahoot-pane { display: none; }
     .kahoot-pane.active { display: block; }
-    .room-code { display: inline-flex; align-items: center; min-height: 48px; padding: 0 14px; border-radius: var(--radius); border: 1px dashed var(--line); background: var(--soft); font-size: 24px; font-weight: 950; letter-spacing: .08em; }
+    .room-code { display: inline-flex; align-items: center; min-height: 48px; padding: 0 14px; border-radius: var(--radius); border: 1px dashed color-mix(in srgb, var(--line), var(--red) 18%); background: linear-gradient(135deg, color-mix(in srgb, var(--green), transparent 90%), color-mix(in srgb, var(--red), transparent 92%)), var(--soft); font-size: 24px; font-weight: 950; letter-spacing: 0; }
     .players { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
     .player-pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 10px; min-width: 0; }
     .kahoot-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
-    .answer-btn { min-height: 78px; padding: 12px; color: #fff; line-height: 1.25; overflow-wrap: anywhere; box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .16); }
-    .answer-btn:nth-child(1) { background: #e74856; }
-    .answer-btn:nth-child(2) { background: #2589d8; }
-    .answer-btn:nth-child(3) { background: #e4a11b; }
-    .answer-btn:nth-child(4) { background: #31a85b; }
+    .answer-btn { min-height: 78px; padding: 12px; color: #fff; line-height: 1.25; overflow-wrap: anywhere; box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .18), 0 10px 18px rgba(16, 16, 16, .12); }
+    .answer-btn:nth-child(1) { background: linear-gradient(135deg, var(--red), var(--red2)); }
+    .answer-btn:nth-child(2) { background: linear-gradient(135deg, var(--black), #2d302b); }
+    .answer-btn:nth-child(3) { color: var(--black); background: linear-gradient(135deg, var(--white), color-mix(in srgb, var(--green), var(--white) 72%)); border: 1px solid color-mix(in srgb, var(--green), var(--black) 16%); }
+    .answer-btn:nth-child(4) { background: linear-gradient(135deg, var(--green), var(--green2)); }
     .scoreboard { display: grid; gap: 7px; margin-top: 10px; }
     .score-row { display: flex; justify-content: space-between; gap: 10px; padding: 8px 10px; box-shadow: none; }
     .score-row strong { overflow-wrap: anywhere; }
@@ -788,12 +1223,13 @@
       min-height: 28px;
       padding: 0 9px;
       border-radius: 999px;
-      background: color-mix(in srgb, var(--purple), transparent 82%);
+      background: linear-gradient(135deg, color-mix(in srgb, var(--green), transparent 78%), color-mix(in srgb, var(--red), transparent 86%));
+      border: 1px solid color-mix(in srgb, var(--green), var(--red) 16%);
       color: var(--ink);
       font-size: 11px;
       font-weight: 950;
       text-transform: uppercase;
-      letter-spacing: .04em;
+      letter-spacing: 0;
     }
 
     .role-panel { display: grid; gap: 12px; }
@@ -808,10 +1244,11 @@
       z-index: 900;
       display: none;
       flex-direction: column;
-      background: var(--panel);
-      border: 1px solid var(--line);
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--panel), var(--white) 12%), var(--panel));
+      border: 1px solid color-mix(in srgb, var(--line), var(--red) 12%);
       border-radius: 14px;
-      box-shadow: 0 30px 70px rgba(0,0,0,.42);
+      box-shadow: 0 30px 70px rgba(0,0,0,.42), inset 0 0 0 1px color-mix(in srgb, var(--green), transparent 84%);
       overflow: hidden;
       resize: both;
       min-width: 320px;
@@ -823,7 +1260,7 @@
       align-items: center;
       gap: 10px;
       padding: 10px 12px;
-      background: linear-gradient(135deg, var(--purple), var(--blue));
+      background: linear-gradient(135deg, var(--black), var(--red) 48%, var(--green));
       color: #fff;
       cursor: grab;
       user-select: none;
@@ -858,11 +1295,11 @@
       min-height: 42px;
       padding: 0 14px;
       border-radius: var(--radius);
-      background: linear-gradient(135deg, #ffd84d, #f6b21a);
-      color: #3a2a00;
-      border: 1px solid #d99a0a;
+      background: linear-gradient(135deg, var(--green), var(--white) 52%, var(--red));
+      color: var(--black);
+      border: 1px solid color-mix(in srgb, var(--green), var(--red) 26%);
       font-weight: 950;
-      box-shadow: 0 6px 16px rgba(246, 178, 26, .35), inset 0 -3px 0 rgba(0,0,0,.08);
+      box-shadow: 0 8px 18px color-mix(in srgb, var(--red), transparent 78%), inset 0 -3px 0 rgba(0,0,0,.12);
       cursor: pointer;
     }
     .create-class-btn:hover { filter: brightness(1.05); }
@@ -886,8 +1323,10 @@
       align-items: center;
       padding: 18px;
       border-radius: var(--radius);
-      background: linear-gradient(135deg, color-mix(in srgb, var(--green), transparent 78%), color-mix(in srgb, var(--blue), transparent 78%));
-      border: 1px solid var(--line);
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--green), transparent 78%), color-mix(in srgb, var(--red), transparent 84%)),
+        var(--panel);
+      border: 1px solid color-mix(in srgb, var(--line), var(--green) 14%);
     }
     .profile-hero .avatar-preview { margin: 0; }
     .profile-hero-info { display: grid; gap: 8px; min-width: 0; }
@@ -899,8 +1338,8 @@
       gap: 6px;
       padding: 4px 10px;
       border-radius: 999px;
-      background: var(--panel);
-      border: 1px solid var(--line);
+      background: linear-gradient(180deg, color-mix(in srgb, var(--panel), var(--white) 12%), var(--panel));
+      border: 1px solid color-mix(in srgb, var(--line), var(--green) 10%);
       font-weight: 900;
       font-size: 12px;
     }
@@ -924,8 +1363,10 @@
       gap: 8px;
       padding: 9px 10px;
       border-radius: var(--radius);
-      background: var(--soft);
-      border: 1px solid var(--line);
+      background:
+        linear-gradient(90deg, color-mix(in srgb, var(--green), transparent 92%), transparent 62%),
+        var(--soft);
+      border: 1px solid color-mix(in srgb, var(--line), var(--green) 12%);
     }
 
     .user-row strong, .class-row strong { overflow-wrap: anywhere; }
@@ -938,33 +1379,58 @@
       display: none;
       place-items: center;
       padding: 18px;
-      background: rgba(7, 13, 20, .42);
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--green), transparent 86%), color-mix(in srgb, var(--red), transparent 88%)),
+        rgba(7, 13, 20, .48);
       backdrop-filter: blur(8px);
     }
 
     .modal.show { display: grid; }
-    .modal-card { width: 92vw; max-width: 560px; max-height: calc(100dvh - 36px); overflow: auto; padding: 18px; display: grid; gap: 14px; }
+    .modal-card { position: relative; width: 92vw; max-width: 560px; max-height: calc(100dvh - 36px); overflow: auto; padding: 18px; display: grid; gap: 14px; }
+    .modal-card::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      height: 5px;
+      background: linear-gradient(90deg, var(--green), var(--white), var(--red));
+      pointer-events: none;
+    }
     .modal-card.start-card { max-width: 620px; }
     .tutorial-card {
+      position: relative;
+      overflow: hidden;
       display: none;
       min-height: 138px;
       padding: 18px;
       border-radius: var(--radius);
-      background: linear-gradient(135deg, color-mix(in srgb, var(--green), transparent 86%), color-mix(in srgb, var(--blue), transparent 86%));
-      border: 1px solid var(--line);
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--green), transparent 80%), color-mix(in srgb, var(--red), transparent 86%)),
+        var(--soft);
+      border: 1px solid color-mix(in srgb, var(--line), var(--green) 16%);
       align-content: center;
       gap: 8px;
+    }
+
+    .tutorial-card::after {
+      content: "";
+      position: absolute;
+      inset: auto 14px 12px auto;
+      width: 46px;
+      height: 8px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--green), var(--white), var(--red));
+      opacity: .8;
     }
 
     .tutorial-card.active { display: grid; animation: viewIn .22s ease both; }
     .tutorial-card b { font-size: clamp(24px, 4vw, 38px); line-height: 1; }
     .tutorial-card span { color: var(--muted); font-weight: 850; }
     .tutorial-dots { display: flex; justify-content: center; gap: 7px; }
-    .tutorial-dots span { width: 9px; height: 9px; border-radius: 50%; background: var(--line); }
-    .tutorial-dots span.active { background: var(--green); }
+    .tutorial-dots span { width: 9px; height: 9px; border-radius: 50%; background: color-mix(in srgb, var(--line), var(--black) 8%); }
+    .tutorial-dots span.active { background: linear-gradient(135deg, var(--green), var(--red)); }
     .account-pane { display: none; gap: 12px; }
     .account-pane.show { display: grid; }
-    .start-settings { display: grid; gap: 8px; margin: 10px 0; padding: 10px; background: var(--soft); border: 1px solid var(--line); border-radius: var(--radius); }
+    .start-settings { display: grid; gap: 8px; margin: 10px 0; padding: 10px; background: linear-gradient(135deg, color-mix(in srgb, var(--green), transparent 92%), color-mix(in srgb, var(--red), transparent 94%)), var(--soft); border: 1px solid color-mix(in srgb, var(--line), var(--green) 12%); border-radius: var(--radius); }
     .start-settings .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
     .start-settings input[type="range"] { flex: 1; max-width: 180px; }
     .guest-note { font-size: 12px; margin-top: 8px; text-align: center; }
@@ -974,13 +1440,14 @@
       place-items: center;
       min-height: 64px;
       border-radius: var(--radius);
-      background: var(--soft);
-      border: 2px solid transparent;
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--panel), var(--white) 8%), var(--soft));
+      border: 2px solid color-mix(in srgb, var(--line), transparent 26%);
       font-size: 31px;
     }
 
-    .choice.active { border-color: var(--green); background: color-mix(in srgb, var(--green), white 88%); }
-    body[data-theme="dark"] .choice.active { background: color-mix(in srgb, var(--green), black 72%); }
+    .choice.active { border-color: color-mix(in srgb, var(--green), var(--red) 16%); background: linear-gradient(135deg, color-mix(in srgb, var(--green), var(--white) 78%), color-mix(in srgb, var(--red), var(--white) 88%)); }
+    body[data-theme="dark"] .choice.active { background: linear-gradient(135deg, color-mix(in srgb, var(--green), black 62%), color-mix(in srgb, var(--red), black 70%)); }
     .settings-menu {
       position: fixed;
       z-index: 80;
@@ -989,28 +1456,41 @@
       display: none;
       width: min(330px, calc(100vw - 28px));
       padding: 14px;
+      overflow: hidden;
+    }
+
+    .settings-menu::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      height: 4px;
+      background: linear-gradient(90deg, var(--green), var(--white), var(--red));
+      pointer-events: none;
     }
 
     .settings-menu.show { display: grid; gap: 12px; }
-    .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; }
+    .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid color-mix(in srgb, var(--line), transparent 40%); }
     .toggle {
       position: relative;
       width: 54px;
       height: 30px;
       border-radius: 999px;
-      background: #a8b3bd;
-      border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--black), transparent 72%);
+      border: 1px solid color-mix(in srgb, var(--line), var(--black) 10%);
       padding: 3px;
     }
 
     .toggle span { display: block; width: 22px; height: 22px; border-radius: 50%; background: #fff; transition: transform .18s ease; }
-    .toggle.on { background: var(--green); }
+    .toggle.on { background: linear-gradient(90deg, var(--green), var(--red)); }
     .toggle.on span { transform: translateX(24px); }
     .toast { position: fixed; right: 18px; bottom: 18px; z-index: 120; display: grid; gap: 8px; width: min(360px, calc(100vw - 36px)); pointer-events: none; }
-    .toast-item { padding: 12px 14px; border-radius: var(--radius); background: rgba(23, 33, 43, .95); color: #fff; box-shadow: var(--shadow); font-weight: 800; }
+    .toast-item { padding: 12px 14px; border-radius: var(--radius); background: linear-gradient(135deg, rgba(16, 16, 16, .96), color-mix(in srgb, var(--red), black 50%)); color: #fff; box-shadow: var(--shadow); font-weight: 800; border: 1px solid color-mix(in srgb, var(--green), transparent 72%); }
 
     @media (max-width: 980px) {
       .game-layout, .split { grid-template-columns: 1fr; }
+      .games-hero { grid-template-columns: 1fr; }
+      .game-mode-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .game-stat-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       canvas { min-height: 300px; }
     }
 
@@ -1029,7 +1509,9 @@
         grid-template-columns: auto 1fr auto;
         gap: 6px;
         backdrop-filter: none;
-        background: var(--panel);
+        background:
+          linear-gradient(90deg, color-mix(in srgb, var(--green), transparent 88%), transparent 36%, transparent 64%, color-mix(in srgb, var(--red), transparent 88%)),
+          var(--panel);
         border-bottom-width: 1px;
       }
       .top-left { justify-self: start; padding-left: 0; gap: 4px; }
@@ -1041,11 +1523,22 @@
       .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
       .summary > div { padding: 10px; }
       .summary b { font-size: 20px; }
+      .games-lobby { gap: 10px; margin-bottom: 12px; }
+      .games-hero { padding: 14px; gap: 12px; }
+      .games-copy p { font-size: 13px; }
+      .games-controls-row { grid-template-columns: 1fr; }
+      .game-mode-grid { grid-template-columns: 1fr; gap: 8px; }
+      .game-mode-card { min-height: 84px; padding: 10px; }
+      .game-mode-icon { width: 38px; height: 38px; font-size: 12px; }
+      .game-stat-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .game-stat-strip > div { min-height: 62px; padding: 9px 10px; }
+      .game-stat-strip b { font-size: 18px; }
       .nav {
         width: calc(100vw - 16px);
         padding: 6px;
         backdrop-filter: none;
-        background: var(--panel);
+        background:
+          linear-gradient(180deg, color-mix(in srgb, var(--panel), var(--white) 12%), var(--panel));
         border-radius: 18px;
       }
       .nav-btn { min-height: 56px; font-size: 11px; padding: 0 2px; gap: 2px; }
@@ -1095,8 +1588,11 @@
         padding: 10px 12px;
         margin-bottom: 12px;
         border-radius: var(--radius);
-        background: linear-gradient(135deg, color-mix(in srgb, var(--green), transparent 82%), color-mix(in srgb, var(--blue), transparent 82%));
-        border: 1px solid var(--line);
+        background:
+          linear-gradient(135deg, color-mix(in srgb, var(--green), transparent 80%), color-mix(in srgb, var(--red), transparent 88%)),
+          var(--panel);
+        border: 1px solid color-mix(in srgb, var(--line), var(--green) 16%);
+        box-shadow: inset 4px 0 0 var(--green), var(--soft-shadow);
       }
       .mobile-status-user { display: flex; align-items: center; gap: 8px; min-width: 0; }
       .mobile-status-name { display: grid; gap: 2px; min-width: 0; }
@@ -1122,6 +1618,7 @@
       canvas { min-height: 220px; aspect-ratio: 4 / 3; }
       .watermark { top: 58px; font-size: 8px; right: 8px; }
       .settings-menu { top: 68px; right: 6px; width: calc(100vw - 12px); }
+      .modal { padding: 12px; }
       .owner-window {
         left: 4px !important;
         right: 4px !important;
@@ -1136,12 +1633,29 @@
       .profile-hero-info h2 { font-size: 20px; }
       .profile-hero-meta { justify-content: center; }
       .profile-chip { font-size: 11px; padding: 3px 8px; }
-      .modal-card { width: 96vw; padding: 14px; max-height: calc(100dvh - 60px); }
-      .modal-card.start-card { width: 98vw; }
+      .modal-card {
+        width: 100%;
+        max-width: calc(100vw - 40px);
+        padding: 14px;
+        max-height: calc(100dvh - 24px);
+      }
+      .modal-card.start-card { width: 100%; max-width: calc(100vw - 40px); }
       .start-settings { padding: 8px; gap: 6px; }
       .start-settings .switch-row { padding: 6px 0; }
+      .start-settings input[type="range"] {
+        min-width: 0;
+        width: min(130px, 38vw);
+      }
       .tutorial-card { padding: 14px; }
       .tutorial-card b { font-size: clamp(20px, 5vw, 32px); }
+      .tutorial-card b,
+      .tutorial-card span {
+        display: block;
+        min-width: 0;
+        max-width: 100%;
+        overflow-wrap: anywhere;
+      }
+      .tutorial-card span { font-size: 14px; line-height: 1.35; }
       .account-pane { gap: 10px; }
       .field input, .field select { min-height: 44px; padding: 0 10px; }
       .field label { font-size: 11px; }
@@ -1280,13 +1794,29 @@
       </section>
 
       <section class="view" id="gamesView">
-        <div class="view-head">
-          <h2 data-i18n="games">Games</h2>
-          <div class="toolbar">
-            <select id="lessonSelect"></select>
-            <button class="primary" id="startSelectedGame" type="button">▶ <span data-i18n="start">Start</span></button>
+        <section class="games-lobby">
+          <div class="games-hero">
+            <div class="games-copy">
+              <span class="games-kicker" data-i18n="gameArena">Game arena</span>
+              <h2 data-i18n="games">Games</h2>
+              <p data-i18n="gameIntro">Choose a lesson, pick a training style, then jump into a fast Latin challenge.</p>
+            </div>
+            <div class="games-controls">
+              <label for="lessonSelect" data-i18n="lesson">Lesson</label>
+              <div class="games-controls-row">
+                <select id="lessonSelect"></select>
+                <button class="primary" id="startSelectedGame" type="button">▶ <span data-i18n="start">Start</span></button>
+              </div>
+            </div>
           </div>
-        </div>
+          <div class="game-mode-grid" id="gameModeGrid"></div>
+          <div class="game-stat-strip" id="gameStatStrip">
+            <div><span data-i18n="lesson">Lesson</span><b id="gameLessonStat">1</b></div>
+            <div><span data-i18n="words">Words</span><b id="gameWordsStat">0</b></div>
+            <div><span data-i18n="bestRun">Best run</span><b id="gameBestStat">0★</b></div>
+            <div><span data-i18n="mode">Mode</span><b id="gameModeStat">Flappy</b></div>
+          </div>
+        </section>
         <div class="game-layout" id="gameLayout">
           <section class="game-card">
             <div class="prompt">
@@ -1576,7 +2106,11 @@
         loadingTime: "Loading time (ms)", loadingSaved: "Loading time saved",
         logOut: "Log out", loggedOut: "Logged out",
         deleteAccount: "Delete account", deleteConfirm: "Delete this account permanently?", accountDeleted: "Account deleted",
-        profile: "Profile"
+        profile: "Profile", gameArena: "Game arena", gameIntro: "Choose a lesson, pick a training style, then jump into a fast Latin challenge.",
+        words: "Words", bestRun: "Best run", mode: "Mode", nextUp: "Next up",
+        flappyDesc: "Fly through the correct answer lane.", breakoutDesc: "Break blocks to reveal the right word.",
+        memoryDesc: "Match Latin with meaning pairs.", catcherDesc: "Catch the answer before it drops.",
+        popDesc: "Tap the right target under pressure."
       },
       de: {
         kahoot: "Kahoot", settings: "Einstellungen", language: "Sprache", sfx: "SFX", darkMode: "Dunkelmodus",
@@ -1603,7 +2137,11 @@
         loadingTime: "Ladezeit (ms)", loadingSaved: "Ladezeit gespeichert",
         logOut: "Abmelden", loggedOut: "Abgemeldet",
         deleteAccount: "Konto löschen", deleteConfirm: "Konto dauerhaft löschen?", accountDeleted: "Konto gelöscht",
-        profile: "Profil"
+        profile: "Profil", gameArena: "Spielarena", gameIntro: "Wähle eine Lektion, such dir einen Trainingsstil aus und starte eine schnelle Lateinrunde.",
+        words: "Wörter", bestRun: "Bester Lauf", mode: "Modus", nextUp: "Als nächstes",
+        flappyDesc: "Fliege durch die richtige Antwortspur.", breakoutDesc: "Zerbrich Blöcke und finde das richtige Wort.",
+        memoryDesc: "Paare Latein und Bedeutung.", catcherDesc: "Fange die Antwort, bevor sie fällt.",
+        popDesc: "Tippe schnell auf das richtige Ziel."
       }
     };
 
@@ -1639,6 +2177,7 @@
     ];
 
     const GAME_TYPES = ["flappy", "breakout", "memory", "catcher", "pop"];
+    const GAME_ICONS = { flappy: "FL", breakout: "BR", memory: "ME", catcher: "CA", pop: "PO" };
     const lessons = new Map();
     VOCABULARY.forEach((entry) => {
       if (!lessons.has(entry.lesson)) lessons.set(entry.lesson, []);
@@ -1672,6 +2211,7 @@
     let audioContext = null;
     let game = null;
     let raf = null;
+    let selectedGameType = null;
     let selectedLessonForPicker = 1;
     let kahoot = {
       hostPeer: null,
@@ -1964,7 +2504,7 @@
     }
 
     function rewardConnectorSVG() {
-      return `<svg class="reward-line" viewBox="0 0 120 50" preserveAspectRatio="none" aria-hidden="true"><path d="M 120 25 Q 60 0 0 25"/></svg>`;
+      return `<svg class="reward-line" viewBox="0 0 60 36" preserveAspectRatio="none" aria-hidden="true"><path d="M 60 18 Q 30 0 0 18"/></svg>`;
     }
 
     function rewardHTML(lessonNumber) {
@@ -1975,7 +2515,6 @@
       const src = isGem ? "gems.png" : "chest.png";
       const suffix = isGem ? "💎" : "🪙";
       return `<div class="reward-node" title="${value} ${suffix}">
-        ${rewardConnectorSVG()}
         <span class="reward-icon"><img src="${src}" alt="" onerror="this.replaceWith(document.createTextNode('${fallback}'))"></span>
         <span class="reward-text"><b>${value}</b><small>${suffix}</small></span>
       </div>`;
@@ -2020,6 +2559,7 @@
       renderStats();
       renderPath();
       renderSelectors();
+      renderGameLobby();
       renderShop();
       renderAvatarPage();
       renderRolePanel();
@@ -2093,6 +2633,7 @@
         return `<div class="path-step ${side}">
           <button class="path-node ${cls}" data-lesson="${lessonNumber}" ${(!accessible || done) ? "disabled" : ""} type="button">${icon}</button>
           <div class="path-label"><strong>${tr("lesson")} ${lessonNumber}</strong><div class="stars">${starsHTML(stars)}</div><div class="muted">${status} · ${tr(gameForLesson(lessonNumber))}</div></div>
+          ${rewardConnectorSVG()}
           ${rewardHTML(lessonNumber)}
         </div>`;
       }).join("");
@@ -2100,12 +2641,52 @@
     }
 
     function renderSelectors() {
+      const currentLesson = Number($("#lessonSelect").value);
       $("#lessonSelect").innerHTML = lessonNumbers.map((lessonNumber) => {
         const disabled = !canAccessLesson(lessonNumber) || lessonComplete(lessonNumber);
         return `<option value="${lessonNumber}" ${disabled ? "disabled" : ""}>${tr("lesson")} ${lessonNumber}</option>`;
       }).join("");
-      $("#lessonSelect").value = String(nextPlayableLesson());
+      const preferredLesson = currentLesson && canAccessLesson(currentLesson) && !lessonComplete(currentLesson)
+        ? currentLesson
+        : nextPlayableLesson();
+      $("#lessonSelect").value = String(preferredLesson);
+      if (!selectedGameType || !GAME_TYPES.includes(selectedGameType)) selectedGameType = gameForLesson(preferredLesson);
       $("#kahootLessonSelect").innerHTML = `<option value="all">${tr("allWords")}</option>` + lessonNumbers.map((lessonNumber) => `<option value="${lessonNumber}">${tr("lesson")} ${lessonNumber}</option>`).join("");
+    }
+
+    function renderGameLobby() {
+      const lessonSelect = $("#lessonSelect");
+      if (!lessonSelect) return;
+      const lessonNumber = Number(lessonSelect.value) || nextPlayableLesson();
+      const suggestedType = gameForLesson(lessonNumber);
+      if (!selectedGameType || !GAME_TYPES.includes(selectedGameType)) selectedGameType = suggestedType;
+      const modeGrid = $("#gameModeGrid");
+      if (modeGrid) {
+        modeGrid.innerHTML = GAME_TYPES.map((type) => `
+          <button class="game-mode-card ${selectedGameType === type ? "active" : ""}" data-game-type="${type}" type="button">
+            <span class="game-mode-icon">${GAME_ICONS[type] || type.slice(0, 2).toUpperCase()}</span>
+            <span>
+              <strong>${tr(type)}</strong>
+              <small>${tr(`${type}Desc`)}</small>
+            </span>
+            ${type === suggestedType ? `<em class="game-mode-badge">${tr("nextUp")}</em>` : ""}
+          </button>
+        `).join("");
+        $$("[data-game-type]", modeGrid).forEach((button) => button.addEventListener("click", () => {
+          selectedGameType = button.dataset.gameType;
+          renderGameLobby();
+          playSfx("click");
+        }));
+      }
+
+      const words = lessons.get(lessonNumber)?.length || 0;
+      const bestStars = Number(state.stars[lessonNumber]) || 0;
+      const lessonStat = $("#gameLessonStat"); if (lessonStat) lessonStat.textContent = String(lessonNumber);
+      const wordsStat = $("#gameWordsStat"); if (wordsStat) wordsStat.textContent = String(words);
+      const bestStat = $("#gameBestStat"); if (bestStat) bestStat.textContent = `${bestStars}/4`;
+      const modeStat = $("#gameModeStat"); if (modeStat) modeStat.textContent = tr(selectedGameType);
+      const startButton = $("#startSelectedGame");
+      if (startButton) startButton.disabled = !canAccessLesson(lessonNumber) || lessonComplete(lessonNumber);
     }
 
     function renderShop() {
@@ -2384,7 +2965,8 @@
     }
 
     function openGamePicker(lessonNumber) {
-      startGame(lessonNumber, gameForLesson(lessonNumber));
+      selectedGameType = gameForLesson(lessonNumber);
+      startGame(lessonNumber, selectedGameType);
     }
 
     function closeGamePicker() {}
@@ -2393,8 +2975,10 @@
       if (!canAccessLesson(lessonNumber)) { toast(tr("lessonLocked")); return; }
       if (lessonComplete(lessonNumber)) { toast(tr("lessonComplete")); return; }
       closeGamePicker();
+      selectedGameType = type;
       showView("games");
       $("#lessonSelect").value = String(lessonNumber);
+      renderGameLobby();
       cancelAnimationFrame(raf);
       const pool = shuffle(lessons.get(lessonNumber) || []);
       const entries = type === "memory" ? pool.slice(0, Math.min(8, pool.length)) : pool;
@@ -3433,7 +4017,11 @@
       });
       $("#startSelectedGame").addEventListener("click", () => {
         const lessonNumber = Number($("#lessonSelect").value);
-        startGame(lessonNumber, gameForLesson(lessonNumber));
+        startGame(lessonNumber, selectedGameType || gameForLesson(lessonNumber));
+      });
+      $("#lessonSelect").addEventListener("change", () => {
+        renderGameLobby();
+        playSfx("click");
       });
       $("#flapBtn").addEventListener("click", flap);
       $("#endGameBtn").addEventListener("click", () => finishRun(true));
