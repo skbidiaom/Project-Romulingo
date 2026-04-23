@@ -4,6 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <title>Romulingo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
@@ -34,26 +37,35 @@
     }
 
     body[data-theme="dark"] {
-      --bg: #080a08;
-      --bg2: #141914;
-      --ink: #f8faf5;
-      --muted: #b7c0b3;
-      --panel: rgba(17, 20, 16, .96);
-      --line: #2f3b2a;
-      --soft: #151d13;
-      --green: #8fd51d;
-      --red: #ff3340;
-      --red2: #c91621;
-      --shadow: 0 18px 42px rgba(0, 0, 0, .35);
-      --soft-shadow: 0 10px 24px rgba(0, 0, 0, .25);
+      --bg: #0d1117;
+      --bg2: #161b22;
+      --ink: #e8eef5;
+      --muted: #8b96a3;
+      --panel: rgba(22, 27, 34, .96);
+      --line: #30363d;
+      --soft: #1c222b;
+      --green: #66d96b;
+      --green2: #4cc46f;
+      --red: #ff5765;
+      --red2: #d93445;
+      --black: #06080a;
+      --white: #f6f8fa;
+      --gold: #ffce4a;
+      --gem: #79b8ff;
+      --shadow: 0 22px 50px rgba(0, 0, 0, .55);
+      --soft-shadow: 0 12px 28px rgba(0, 0, 0, .4);
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body {
       min-height: 100%;
       min-height: 100dvh;
-      overscroll-behavior-y: none;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
     }
+    html { overscroll-behavior-y: none; }
+    body { overflow-x: hidden; touch-action: manipulation; }
+    input, textarea, select { font-size: 16px; }
 
     body {
       margin: 0;
@@ -62,7 +74,7 @@
         repeating-linear-gradient(90deg, color-mix(in srgb, var(--black), transparent 96%) 0 1px, transparent 1px 78px),
         repeating-linear-gradient(0deg, color-mix(in srgb, var(--black), transparent 97%) 0 1px, transparent 1px 78px),
         linear-gradient(180deg, var(--bg), var(--bg2));
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: Nunito, ui-rounded, "SF Pro Rounded", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       letter-spacing: 0;
       overflow-x: hidden;
       -webkit-text-size-adjust: 100%;
@@ -190,10 +202,10 @@
       padding: 16px clamp(10px, 3vw, 28px) 10px;
       overflow: visible;
       text-align: center;
-      background: color-mix(in srgb, var(--panel), transparent 5%);
-      border-bottom: 1px solid color-mix(in srgb, var(--line), var(--black) 6%);
-      box-shadow: 0 10px 28px rgba(16, 16, 16, .08);
-      backdrop-filter: blur(18px);
+      background: color-mix(in srgb, var(--panel), transparent 8%);
+      border-bottom: 1px solid color-mix(in srgb, var(--line), var(--green) 12%);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, .12);
+      backdrop-filter: blur(22px);
     }
 
     .topbar::after {
@@ -378,44 +390,36 @@
       pointer-events: auto;
       position: relative;
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 6px;
-      width: min(620px, 100%);
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      width: min(520px, 100%);
       margin: 0 auto;
-      padding: 7px;
+      padding: 8px;
       overflow: hidden;
-      border: 1px solid color-mix(in srgb, var(--line), var(--black) 10%);
-      border-radius: 16px;
-      background:
-        linear-gradient(180deg, color-mix(in srgb, var(--panel), var(--white) 18%), transparent),
-        color-mix(in srgb, var(--panel), transparent 3%);
+      border: 1px solid color-mix(in srgb, var(--line), var(--green) 14%);
+      border-radius: 22px;
+      background: color-mix(in srgb, var(--panel), transparent 4%);
       box-shadow: var(--shadow);
-      backdrop-filter: blur(18px);
-    }
-
-    .nav::before {
-      content: "";
-      position: absolute;
-      inset: 0 0 auto;
-      height: 4px;
-      background: var(--green);
-      pointer-events: none;
+      backdrop-filter: blur(20px);
     }
 
     .nav-btn {
       position: relative;
-      justify-content: flex-start;
+      justify-content: center;
       width: 100%;
       color: var(--muted);
-      background:
-        linear-gradient(180deg, color-mix(in srgb, var(--panel), var(--white) 14%), color-mix(in srgb, var(--panel), transparent 10%));
+      background: transparent;
       border: 1px solid transparent;
+      border-radius: 16px;
       min-height: 58px;
       flex-direction: column;
-      gap: 2px;
+      gap: 4px;
       font-size: 12px;
+      font-weight: 800;
       overflow: hidden;
+      transition: background .15s, color .15s;
     }
+    .nav-btn:hover { color: var(--ink); background: color-mix(in srgb, var(--panel), var(--green) 4%); }
 
     .nav-btn.active {
       color: var(--ink);
@@ -679,12 +683,10 @@
       gap: 8px;
       min-height: 48px;
       padding: 7px 10px;
-      border: 1px solid color-mix(in srgb, var(--line), var(--red) 14%);
+      border: 1px solid color-mix(in srgb, var(--line), var(--gold) 24%);
       border-radius: 999px;
-      background:
-        linear-gradient(var(--red), var(--red)),
-        var(--panel);
-      box-shadow: var(--soft-shadow), inset 0 -2px 0 color-mix(in srgb, var(--red), transparent 86%);
+      background: color-mix(in srgb, var(--panel), var(--gold) 14%);
+      box-shadow: var(--soft-shadow), inset 0 -2px 0 color-mix(in srgb, var(--gold), transparent 70%);
       font-weight: 950;
       animation: rewardPulse 2.2s ease-in-out infinite;
     }
@@ -1548,15 +1550,21 @@
         position: sticky;
         top: 0;
         z-index: 50;
-        min-height: 64px;
-        padding: 6px 10px calc(6px + env(safe-area-inset-top, 0px));
+        display: grid;
         grid-template-columns: auto 1fr auto;
+        grid-template-areas: "left brand actions" "left brand actions";
+        align-items: center;
         gap: 6px;
-        backdrop-filter: blur(10px);
-        background: color-mix(in srgb, var(--panel), transparent 8%);
-        border-bottom: 1px solid color-mix(in srgb, var(--line), var(--green) 20%);
-        overflow: visible;
+        min-height: 72px;
+        padding: calc(6px + env(safe-area-inset-top, 0px)) 8px 6px;
+        backdrop-filter: blur(14px);
+        background: color-mix(in srgb, var(--panel), transparent 4%);
+        border-bottom: 1px solid color-mix(in srgb, var(--line), var(--green) 16%);
+        overflow: hidden;
       }
+      .top-left { grid-area: left; justify-self: start; }
+      .brand { grid-area: brand; justify-self: center; }
+      .top-actions { grid-area: actions; justify-self: end; }
       .top-left { justify-self: start; padding-left: 0; gap: 4px; }
       .top-actions { justify-self: end; gap: 4px; }
       .brand strong { display: none; }
@@ -1602,30 +1610,31 @@
       .create-class-btn { padding: 0 8px; font-size: 11px; min-height: 36px; }
       .create-class-btn span { display: none; }
       .brand {
-        width: auto;
+        width: 100%;
         min-width: 0;
         max-width: 100%;
-        height: 56px;
-        justify-self: center;
-        overflow: visible;
+        height: 64px;
+        justify-self: stretch;
+        overflow: hidden;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 8px;
+        gap: 6px;
         padding: 0;
+        transform: none;
       }
       .logo-img {
-        width: 110px;
-        height: 110px;
+        width: 60px;
+        height: 60px;
         flex-shrink: 0;
-        transform: translateX(-18px);
+        transform: none;
       }
       .logo-text-img {
         width: auto;
-        height: 379px;
-        max-width: 1716px;
+        height: 56px;
+        max-width: 60vw;
         object-fit: contain;
-        transform: translateX(-47px);
+        transform: none;
       }
       .brand-mark { width: 38px; height: 38px; font-size: 16px; }
       .hero-logo { display: none; }
@@ -1801,7 +1810,6 @@
       </section>
       <nav class="nav">
         <button class="nav-btn active" data-view="path" type="button">🗺 <span data-i18n="path">Path</span></button>
-        <button class="nav-btn" data-view="games" type="button">🎮 <span data-i18n="games">Games</span></button>
         <button class="nav-btn" data-view="shop" type="button">🛒 <span data-i18n="shop">Shop</span></button>
         <button class="nav-btn" data-view="kahoot" type="button">📡 <span data-i18n="kahoot">Kahoot</span></button>
       </nav>
