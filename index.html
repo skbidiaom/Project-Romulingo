@@ -59,8 +59,6 @@
       margin: 0;
       color: var(--ink);
       background:
-        linear-gradient(var(--green), var(--green)) top / 100% 6px no-repeat,
-        linear-gradient(180deg, color-mix(in srgb, var(--green), transparent 88%), transparent 340px),
         repeating-linear-gradient(90deg, color-mix(in srgb, var(--black), transparent 96%) 0 1px, transparent 1px 78px),
         repeating-linear-gradient(0deg, color-mix(in srgb, var(--black), transparent 97%) 0 1px, transparent 1px 78px),
         linear-gradient(180deg, var(--bg), var(--bg2));
@@ -190,10 +188,9 @@
       gap: 10px;
       min-height: 84px;
       padding: 16px clamp(10px, 3vw, 28px) 10px;
+      overflow: visible;
       text-align: center;
-      background:
-        linear-gradient(var(--green), var(--green)),
-        color-mix(in srgb, var(--panel), transparent 5%);
+      background: color-mix(in srgb, var(--panel), transparent 5%);
       border-bottom: 1px solid color-mix(in srgb, var(--line), var(--black) 6%);
       box-shadow: 0 10px 28px rgba(16, 16, 16, .08);
       backdrop-filter: blur(18px);
@@ -220,26 +217,29 @@
       justify-content: center;
       gap: 12px;
       height: 60px;
+      overflow: visible;
       font-weight: 950;
       font-size: 20px;
     }
 
     .logo-img {
-      width: 56px;
-      height: 56px;
+      width: 140px;
+      height: 140px;
       object-fit: contain;
       display: none;
       flex-shrink: 0;
       pointer-events: none;
+      transform: translateX(32px);
     }
 
     .logo-text-img {
-      height: 48px;
+      height: 479px;
       width: auto;
-      max-width: 260px;
+      max-width: 2574px;
       object-fit: contain;
       display: block;
       pointer-events: none;
+      transform: translateX(-40px);
     }
 
     .brand-fallback {
@@ -419,10 +419,8 @@
 
     .nav-btn.active {
       color: var(--ink);
-      border-color: color-mix(in srgb, var(--green), var(--red) 20%);
-      background:
-        linear-gradient(var(--green), var(--green)),
-        var(--panel);
+      border-color: color-mix(in srgb, var(--line), var(--green) 30%);
+      background: color-mix(in srgb, var(--panel), var(--green) 6%);
       box-shadow: var(--soft-shadow), inset 0 0 0 1px color-mix(in srgb, var(--white), transparent 18%);
     }
 
@@ -451,7 +449,7 @@
     }
     .danger {
       color: #fff;
-      background: linear-gradient(135deg, var(--red), var(--red2));
+      background: var(--red);
       box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .18), 0 10px 20px color-mix(in srgb, var(--red), transparent 74%);
     }
     .tiny-btn {
@@ -639,8 +637,8 @@
     .path-node:disabled { opacity: 1; filter: none; }
     .path-node:not(:disabled):hover { transform: translateY(-4px) scale(1.04); }
 
-    .path-node.retry { background: linear-gradient(135deg, var(--red), #ff8a48); }
-    .path-node.done { background: linear-gradient(135deg, #18b66a, #0e8a54); }
+    .path-node.retry { background: var(--red); }
+    .path-node.done { background: #18b66a; }
     .path-node.locked { background: linear-gradient(135deg, #a8b3bd, #798591); box-shadow: inset 0 -7px 0 rgba(0, 0, 0, .12); }
     .path-node.locked::before { opacity: .1; filter: grayscale(1); }
     .path-label {
@@ -886,11 +884,9 @@
     }
 
     .game-mode-card.active {
-      border-color: color-mix(in srgb, var(--green), var(--red) 20%);
-      background:
-        linear-gradient(var(--green), var(--green)),
-        var(--panel);
-      box-shadow: 0 16px 30px color-mix(in srgb, var(--green), transparent 76%), inset 0 0 0 1px color-mix(in srgb, var(--white), transparent 14%);
+      border-color: color-mix(in srgb, var(--line), var(--green) 30%);
+      background: color-mix(in srgb, var(--panel), var(--green) 8%);
+      box-shadow: 0 16px 30px color-mix(in srgb, var(--green), transparent 86%), inset 0 0 0 1px color-mix(in srgb, var(--white), transparent 14%);
     }
 
     .game-mode-icon {
@@ -1120,9 +1116,7 @@
       padding: 12px;
       border: 1px solid color-mix(in srgb, var(--line), var(--green) 12%);
       border-radius: var(--radius);
-      background:
-        linear-gradient(var(--green), var(--green)),
-        linear-gradient(180deg, color-mix(in srgb, var(--panel), var(--white) 8%), var(--soft));
+      background: linear-gradient(180deg, color-mix(in srgb, var(--panel), var(--white) 8%), var(--soft));
       animation: softIn .32s ease both;
     }
 
@@ -1160,7 +1154,7 @@
     }
     .hud-cell b { display: block; font-size: 24px; line-height: 1; }
     .hud-cell span { color: var(--muted); font-size: 12px; font-weight: 850; }
-    .result { display: none; margin-top: 10px; padding: 14px; border-radius: var(--radius); background: linear-gradient(135deg, color-mix(in srgb, var(--green), transparent 90%), var(--soft)); border: 1px solid color-mix(in srgb, var(--line), var(--green) 12%); }
+    .result { display: none; margin-top: 10px; padding: 14px; border-radius: var(--radius); background: color-mix(in srgb, var(--green), var(--soft) 84%); border: 1px solid color-mix(in srgb, var(--line), var(--green) 12%); }
     .result.show { display: grid; gap: 10px; }
 
     .shop-grid {
@@ -1191,7 +1185,6 @@
       place-items: center;
       min-height: 230px;
       background:
-        linear-gradient(var(--green), var(--green)),
         repeating-linear-gradient(45deg, transparent 0 12px, color-mix(in srgb, var(--black), transparent 96%) 12px 13px),
         var(--soft);
       border: 1px dashed color-mix(in srgb, var(--line), var(--green) 18%);
@@ -1254,18 +1247,18 @@
     .split { display: grid; grid-template-columns: 292px minmax(0, 1fr); gap: 14px; }
     .seg { display: flex; gap: 6px; padding: 5px; border-radius: var(--radius); background: linear-gradient(180deg, color-mix(in srgb, var(--panel), var(--white) 12%), var(--soft)); border: 1px solid color-mix(in srgb, var(--line), var(--green) 12%); }
     .seg button { flex: 1; min-height: 36px; border-radius: 6px; background: transparent; color: var(--muted); font-weight: 900; }
-    .seg button.active { color: var(--ink); background: linear-gradient(var(--green), var(--green)), var(--panel); box-shadow: var(--soft-shadow), inset 0 -3px 0 color-mix(in srgb, var(--green), transparent 74%); }
+    .seg button.active { color: var(--ink); background: color-mix(in srgb, var(--panel), var(--green) 8%); box-shadow: var(--soft-shadow), inset 0 -3px 0 color-mix(in srgb, var(--green), transparent 74%); }
     .kahoot-pane { display: none; }
     .kahoot-pane.active { display: block; }
-    .room-code { display: inline-flex; align-items: center; min-height: 48px; padding: 0 14px; border-radius: var(--radius); border: 1px dashed color-mix(in srgb, var(--line), var(--red) 18%); background: linear-gradient(var(--green), var(--green)), var(--soft); font-size: 24px; font-weight: 950; letter-spacing: 0; }
+    .room-code { display: inline-flex; align-items: center; min-height: 48px; padding: 0 14px; border-radius: var(--radius); border: 1px dashed color-mix(in srgb, var(--line), var(--red) 18%); background: var(--soft); font-size: 24px; font-weight: 950; letter-spacing: 0; }
     .players { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
     .player-pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 10px; min-width: 0; }
     .kahoot-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
     .answer-btn { min-height: 78px; padding: 12px; color: #fff; line-height: 1.25; overflow-wrap: anywhere; box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .18), 0 10px 18px rgba(16, 16, 16, .12); }
-    .answer-btn:nth-child(1) { background: linear-gradient(135deg, var(--red), var(--red2)); }
-    .answer-btn:nth-child(2) { background: linear-gradient(135deg, var(--black), #2d302b); }
-    .answer-btn:nth-child(3) { color: var(--black); background: linear-gradient(135deg, var(--white), color-mix(in srgb, var(--green), var(--white) 72%)); border: 1px solid color-mix(in srgb, var(--green), var(--black) 16%); }
-    .answer-btn:nth-child(4) { background: linear-gradient(135deg, var(--green), var(--green2)); }
+    .answer-btn:nth-child(1) { background: var(--red); }
+    .answer-btn:nth-child(2) { background: var(--black); }
+    .answer-btn:nth-child(3) { color: var(--black); background: var(--white); border: 1px solid color-mix(in srgb, var(--green), var(--black) 16%); }
+    .answer-btn:nth-child(4) { background: var(--green); }
     .scoreboard { display: grid; gap: 7px; margin-top: 10px; }
     .score-row { display: flex; justify-content: space-between; gap: 10px; padding: 8px 10px; box-shadow: none; }
     .score-row strong { overflow-wrap: anywhere; }
@@ -1376,9 +1369,7 @@
       align-items: center;
       padding: 18px;
       border-radius: var(--radius);
-      background:
-        linear-gradient(var(--green), var(--green)),
-        var(--panel);
+      background: color-mix(in srgb, var(--panel), var(--green) 6%);
       border: 1px solid color-mix(in srgb, var(--line), var(--green) 14%);
     }
     .profile-hero .avatar-preview { margin: 0; }
@@ -1432,9 +1423,7 @@
       display: none;
       place-items: center;
       padding: 18px;
-      background:
-        linear-gradient(var(--green), var(--green)),
-        rgba(7, 13, 20, .48);
+      background: rgba(7, 13, 20, .48);
       backdrop-filter: blur(8px);
     }
 
@@ -1456,9 +1445,7 @@
       min-height: 138px;
       padding: 18px;
       border-radius: var(--radius);
-      background:
-        linear-gradient(var(--green), var(--green)),
-        var(--soft);
+      background: var(--soft);
       border: 1px solid color-mix(in srgb, var(--line), var(--green) 16%);
       align-content: center;
       gap: 8px;
@@ -1483,7 +1470,7 @@
     .tutorial-dots span.active { background: var(--green); }
     .account-pane { display: none; gap: 12px; }
     .account-pane.show { display: grid; }
-    .start-settings { display: grid; gap: 8px; margin: 10px 0; padding: 10px; background: linear-gradient(var(--green), var(--green)), var(--soft); border: 1px solid color-mix(in srgb, var(--line), var(--green) 12%); border-radius: var(--radius); }
+    .start-settings { display: grid; gap: 8px; margin: 10px 0; padding: 10px; background: var(--soft); border: 1px solid color-mix(in srgb, var(--line), var(--green) 12%); border-radius: var(--radius); }
     .start-settings .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
     .start-settings input[type="range"] { flex: 1; max-width: 180px; }
     .guest-note { font-size: 12px; margin-top: 8px; text-align: center; }
@@ -1554,23 +1541,26 @@
         touch-action: pan-y;
         max-width: 100vw;
       }
-      body { -webkit-text-size-adjust: 100%; }
+      body {
+        -webkit-text-size-adjust: 100%;
+      }
       .topbar {
         position: sticky;
-        min-height: 72px;
-        padding: 8px 10px calc(8px + env(safe-area-inset-top, 0px));
+        top: 0;
+        z-index: 50;
+        min-height: 64px;
+        padding: 6px 10px calc(6px + env(safe-area-inset-top, 0px));
         grid-template-columns: auto 1fr auto;
         gap: 6px;
-        backdrop-filter: none;
-        background:
-          linear-gradient(var(--green), var(--green)),
-          var(--panel);
-        border-bottom-width: 1px;
+        backdrop-filter: blur(10px);
+        background: color-mix(in srgb, var(--panel), transparent 8%);
+        border-bottom: 1px solid color-mix(in srgb, var(--line), var(--green) 20%);
+        overflow: visible;
       }
       .top-left { justify-self: start; padding-left: 0; gap: 4px; }
       .top-actions { justify-self: end; gap: 4px; }
       .brand strong { display: none; }
-      .shell { padding: 10px 8px 130px; gap: 12px; max-width: 100vw; }
+      .shell { padding: 10px 8px 110px; gap: 12px; max-width: 100vw; }
       .view { padding: 12px; }
       .view-head { display: grid; gap: 10px; }
       .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
@@ -1587,14 +1577,21 @@
       .game-stat-strip > div { min-height: 62px; padding: 9px 10px; }
       .game-stat-strip b { font-size: 18px; }
       .nav {
-        width: calc(100vw - 16px);
+        position: fixed;
+        left: 8px;
+        right: 8px;
+        bottom: max(8px, env(safe-area-inset-bottom));
+        width: auto;
         padding: 6px;
-        backdrop-filter: none;
-        background:
-          linear-gradient(180deg, color-mix(in srgb, var(--panel), var(--white) 12%), var(--panel));
-        border-radius: 18px;
+        backdrop-filter: blur(14px);
+        background: color-mix(in srgb, var(--panel), transparent 6%);
+        border: 1px solid color-mix(in srgb, var(--line), var(--green) 24%);
+        border-radius: 22px;
+        box-shadow: 0 14px 30px color-mix(in srgb, var(--black), transparent 80%);
       }
-      .nav-btn { min-height: 56px; font-size: 11px; padding: 0 2px; gap: 2px; }
+      .nav-btn { min-height: 56px; font-size: 11px; padding: 0 2px; gap: 2px; border-radius: 16px; }
+      .nav-btn.active { background: color-mix(in srgb, var(--panel), var(--green) 10%); }
+      .nav-btn.active::after { background: var(--green); height: 3px; bottom: 4px; }
       .top-wallet { padding: 0 6px; min-height: 32px; font-size: 11px; }
       .top-wallet b { font-size: 12px; }
       .profile-top { padding: 0 6px; min-height: 36px; font-size: 11px; }
@@ -1618,15 +1615,17 @@
         padding: 0;
       }
       .logo-img {
-        width: 44px;
-        height: 44px;
+        width: 110px;
+        height: 110px;
         flex-shrink: 0;
+        transform: translateX(-18px);
       }
       .logo-text-img {
         width: auto;
-        height: 38px;
-        max-width: 180px;
+        height: 379px;
+        max-width: 1716px;
         object-fit: contain;
+        transform: translateX(-47px);
       }
       .brand-mark { width: 38px; height: 38px; font-size: 16px; }
       .hero-logo { display: none; }
@@ -1637,10 +1636,10 @@
       .mobile-status-name .role-badge { font-size: 9px; min-height: 20px; padding: 0 6px; justify-self: start; }
       .mobile-status-wallet { display: flex; gap: 4px; flex-shrink: 0; }
       .mobile-status-wallet .wallet-chip { min-height: 30px; padding: 0 6px; font-size: 11px; }
-      .path-step { min-height: 100px; grid-template-columns: minmax(0, 1fr) 72px minmax(0, 1fr); gap: 6px; }
-      .path-node { width: 68px; height: 68px; font-size: 22px; border-width: 4px; }
-      .path-label { max-width: min(110px, calc(48vw - 50px)); padding: 6px; }
-      .path-label strong { font-size: 12px; }
+      .path-step { min-height: 110px; grid-template-columns: minmax(0, 1fr) 88px minmax(0, 1fr); gap: 8px; }
+      .path-node { width: 78px; height: 78px; font-size: 26px; border-width: 5px; }
+      .path-label { max-width: min(120px, calc(48vw - 56px)); padding: 7px; }
+      .path-label strong { font-size: 13px; }
       .path-label .stars { font-size: 12px; }
       .path-label .muted { font-size: 10px; }
       .reward-node { min-height: 38px; padding: 4px 6px; gap: 4px; font-size: 10px; }
@@ -2375,13 +2374,22 @@
         cloud.auth = firebase.auth();
         cloud.db = firebase.firestore();
         cloud.enabled = true;
-        subscribeUsers();
-        subscribeClasses();
         cloud.auth.onAuthStateChanged(async (user) => {
-          if (!user) return;
+          if (!user) {
+            if (cloud.userUnsub) { cloud.userUnsub(); cloud.userUnsub = null; }
+            if (cloud.classUnsub) { cloud.classUnsub(); cloud.classUnsub = null; }
+            cloud.users = [];
+            cloud.classes = [];
+            renderRolePanel();
+            return;
+          }
           state.account.uid = user.uid;
-          const snap = await cloud.db.collection("users").doc(user.uid).get();
-          if (snap.exists) applyUserRecord({ uid: user.uid, ...snap.data() });
+          try {
+            const snap = await cloud.db.collection("users").doc(user.uid).get();
+            if (snap.exists) applyUserRecord({ uid: user.uid, ...snap.data() });
+          } catch (e) { console.warn("user fetch", e); }
+          subscribeUsers();
+          subscribeClasses();
           renderAll();
         });
       } catch (error) {
@@ -2392,19 +2400,30 @@
 
     function subscribeUsers() {
       if (!cloud.enabled || cloud.userUnsub) return;
-      cloud.userUnsub = cloud.db.collection("users").orderBy("username").onSnapshot((snapshot) => {
-        cloud.users = snapshot.docs.map((doc) => ({ uid: doc.id, ...doc.data() }));
-        exposeUserAliases();
-        renderRolePanel();
-      }, (error) => toast(error?.message || "Users"));
+      try {
+        cloud.userUnsub = cloud.db.collection("users").onSnapshot((snapshot) => {
+          cloud.users = snapshot.docs.map((doc) => ({ uid: doc.id, ...doc.data() }));
+          cloud.users.sort((a, b) => String(a.username || "").localeCompare(String(b.username || "")));
+          exposeUserAliases();
+          renderRolePanel();
+          renderAll();
+        }, (error) => {
+          console.error("subscribeUsers", error);
+          toast("Users: " + (error?.message || error?.code || "permission"));
+        });
+      } catch (e) { console.error(e); }
     }
 
     function subscribeClasses() {
       if (!cloud.enabled || cloud.classUnsub) return;
-      cloud.classUnsub = cloud.db.collection("classes").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
-        cloud.classes = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-        renderRolePanel();
-      }, (error) => toast(error?.message || "Classes"));
+      try {
+        cloud.classUnsub = cloud.db.collection("classes").onSnapshot((snapshot) => {
+          cloud.classes = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+          renderRolePanel();
+        }, (error) => {
+          console.error("subscribeClasses", error);
+        });
+      } catch (e) { console.error(e); }
     }
 
     function userPayload() {
@@ -2780,9 +2799,10 @@
       const isOwner = canUseRole("OWNER");
       list.innerHTML = users.length ? users.map((user) => {
         const role = String(user.role || "STUDENT").toUpperCase();
-        const roleButtons = ROLES.map((r) => `<button class="tiny-btn" data-role-user="${escapeHTML(user.username)}" data-role="${r}" type="button">${r}</button>`).join("");
-        const removeBtn = isOwner && usernameKey(user.username) !== usernameKey(state.playerName) ? `<button class="danger-mini" data-remove-user="${escapeHTML(user.username)}" type="button">🗑</button>` : "";
-        return `<div class="user-row"><div><strong>${escapeHTML(user.username)}</strong><br><small>${role} · ${Number(user.coins || 0)} 🪙 ${Number(user.gems || 0)} 💎</small></div><div class="toolbar">${roleButtons}${removeBtn}</div></div>`;
+        const isSelf = usernameKey(user.username) === usernameKey(state.playerName);
+        const roleButtons = isSelf ? `<span class="muted tiny">self</span>` : ROLES.map((r) => `<button class="tiny-btn" data-role-user="${escapeHTML(user.username)}" data-role="${r}" type="button">${r}</button>`).join("");
+        const removeBtn = isOwner && !isSelf ? `<button class="danger-mini" data-remove-user="${escapeHTML(user.username)}" type="button">🗑</button>` : "";
+        return `<div class="user-row${isSelf ? " self" : ""}"><div><strong>${escapeHTML(user.username)}</strong>${isSelf ? " <span class=\"role-badge\">YOU</span>" : ""}<br><small>${role} · ${Number(user.coins || 0)} 🪙 ${Number(user.gems || 0)} 💎</small></div><div class="toolbar">${roleButtons}${removeBtn}</div></div>`;
       }).join("") : `<div class="muted">${tr("noPlayers")}</div>`;
       $$("[data-role-user]", list).forEach((button) => button.addEventListener("click", () => setUserRole(button.dataset.roleUser, button.dataset.role)));
       $$("[data-remove-user]", list).forEach((button) => button.addEventListener("click", () => removeUser(button.dataset.removeUser)));
@@ -2878,6 +2898,7 @@
       role = String(role || "").toUpperCase();
       if (!ROLES.includes(role)) return;
       if (!isAdemAccount()) { toast("Adem only"); return; }
+      if (usernameKey(username) === usernameKey(state.playerName)) { toast("Cannot edit self"); return; }
       const users = allRegisteredUsers();
       const user = findRegisteredUser(username);
       if (!user) { toast("No user"); return; }
@@ -2946,6 +2967,7 @@
     async function grantCurrency() {
       if (!isAdemAccount()) { toast("Adem only"); return; }
       const username = cleanUsername($("#grantUserInput").value);
+      if (usernameKey(username) === usernameKey(state.playerName)) { toast("Cannot edit self"); return; }
       const user = findRegisteredUser(username);
       if (!user) { toast("No user"); return; }
       const coins = Math.max(0, Math.floor(Number($("#grantCoinInput").value) || 0));
