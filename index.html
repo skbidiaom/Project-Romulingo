@@ -235,23 +235,21 @@
     }
 
     .logo-img {
-      width: 140px;
-      height: 140px;
+      width: 48px;
+      height: 48px;
       object-fit: contain;
       display: none;
       flex-shrink: 0;
       pointer-events: none;
-      transform: translateX(32px);
     }
 
     .logo-text-img {
-      height: 479px;
+      height: 52px;
       width: auto;
-      max-width: 2574px;
+      max-width: min(260px, 62vw);
       object-fit: contain;
       display: block;
       pointer-events: none;
-      transform: translateX(-40px);
     }
 
     .brand-fallback {
@@ -390,9 +388,9 @@
       pointer-events: auto;
       position: relative;
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 8px;
-      width: min(520px, 100%);
+      width: min(620px, 100%);
       margin: 0 auto;
       padding: 8px;
       overflow: hidden;
@@ -535,8 +533,6 @@
       width: min(390px, 62vw);
       max-height: 96px;
       object-fit: contain;
-      transform: scale(2.44);
-      transform-origin: center;
       pointer-events: none;
     }
 
@@ -1758,7 +1754,6 @@
         padding-right: max(6px, env(safe-area-inset-right));
       }
       .primary, .ghost, .danger, .tiny-btn, .nav-btn { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-      .nav-btn::before { content: ""; display: block; width: 100%; height: 100%; }
     }
   </style>
 </head>
@@ -1829,6 +1824,7 @@
       </section>
       <nav class="nav">
         <button class="nav-btn active" data-view="path" type="button">🗺 <span data-i18n="path">Path</span></button>
+        <button class="nav-btn" data-view="games" type="button">🎮 <span data-i18n="games">Games</span></button>
         <button class="nav-btn" data-view="shop" type="button">🛒 <span data-i18n="shop">Shop</span></button>
         <button class="nav-btn" data-view="kahoot" type="button">📡 <span data-i18n="kahoot">Kahoot</span></button>
       </nav>
@@ -2716,7 +2712,7 @@
         const status = !accessible ? tr("locked") : done ? tr("done") : stars > 0 ? tr("retry") : tr("open");
         const side = index % 3 === 0 ? "left" : index % 3 === 1 ? "center" : "right";
         return `<div class="path-step ${side}">
-          <button class="path-node ${cls}" data-lesson="${lessonNumber}" ${(!accessible || done) ? "disabled" : ""} type="button">${icon}</button>
+          <button class="path-node ${cls}" data-lesson="${lessonNumber}" ${!accessible ? "disabled" : ""} type="button">${icon}</button>
           <div class="path-label"><strong>${tr("lesson")} ${lessonNumber}</strong><div class="stars">${starsHTML(stars)}</div><div class="muted">${status} · ${tr(gameForLesson(lessonNumber))}</div></div>
           ${rewardConnectorSVG()}
           ${rewardHTML(lessonNumber)}
@@ -2728,10 +2724,11 @@
     function renderSelectors() {
       const currentLesson = Number($("#lessonSelect").value);
       $("#lessonSelect").innerHTML = lessonNumbers.map((lessonNumber) => {
-        const disabled = !canAccessLesson(lessonNumber) || lessonComplete(lessonNumber);
-        return `<option value="${lessonNumber}" ${disabled ? "disabled" : ""}>${tr("lesson")} ${lessonNumber}</option>`;
+        const disabled = !canAccessLesson(lessonNumber);
+        const done = lessonComplete(lessonNumber) ? " ✓" : "";
+        return `<option value="${lessonNumber}" ${disabled ? "disabled" : ""}>${tr("lesson")} ${lessonNumber}${done}</option>`;
       }).join("");
-      const preferredLesson = currentLesson && canAccessLesson(currentLesson) && !lessonComplete(currentLesson)
+      const preferredLesson = currentLesson && canAccessLesson(currentLesson)
         ? currentLesson
         : nextPlayableLesson();
       $("#lessonSelect").value = String(preferredLesson);
@@ -2771,7 +2768,7 @@
       const bestStat = $("#gameBestStat"); if (bestStat) bestStat.textContent = `${bestStars}/4`;
       const modeStat = $("#gameModeStat"); if (modeStat) modeStat.textContent = tr(selectedGameType);
       const startButton = $("#startSelectedGame");
-      if (startButton) startButton.disabled = !canAccessLesson(lessonNumber) || lessonComplete(lessonNumber);
+      if (startButton) startButton.disabled = !canAccessLesson(lessonNumber);
     }
 
     function renderShop() {
@@ -3062,7 +3059,6 @@
 
     function startGame(lessonNumber, type = gameForLesson(lessonNumber)) {
       if (!canAccessLesson(lessonNumber)) { toast(tr("lessonLocked")); return; }
-      if (lessonComplete(lessonNumber)) { toast(tr("lessonComplete")); return; }
       closeGamePicker();
       selectedGameType = type;
       showView("games");
