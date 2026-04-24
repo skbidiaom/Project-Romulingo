@@ -232,26 +232,32 @@
       overflow: visible;
       font-weight: 950;
       font-size: 20px;
+      cursor: pointer;
     }
 
     .logo-img {
-      width: 140px;
-      height: 140px;
+      width: 62px;
+      height: 62px;
       object-fit: contain;
       display: none;
       flex-shrink: 0;
-      pointer-events: none;
-      transform: translateX(32px);
+      transform: none;
     }
 
     .logo-text-img {
-      height: 479px;
+      height: 70px;
       width: auto;
-      max-width: 2574px;
+      max-width: min(270px, 42vw);
       object-fit: contain;
       display: block;
-      pointer-events: none;
-      transform: translateX(-40px);
+      transform: none;
+    }
+
+    .brand.logo-pop img { animation: logoPop .38s ease both; }
+    @keyframes logoPop {
+      0% { filter: brightness(1.2) drop-shadow(0 8px 14px rgba(0,0,0,.14)); }
+      45% { scale: 1.08; }
+      100% { scale: 1; }
     }
 
     .brand-fallback {
@@ -332,6 +338,7 @@
       text-transform: uppercase;
       letter-spacing: 0;
       pointer-events: none;
+      display: none;
     }
 
     .shell {
@@ -1122,6 +1129,96 @@
       cursor: pointer;
     }
 
+    body.game-fullscreen { overflow: hidden; background: #4ec0ca; }
+    body.game-fullscreen .topbar,
+    body.game-fullscreen .nav,
+    body.game-fullscreen .toast,
+    body.game-fullscreen .watermark,
+    body.game-fullscreen .mobile-status,
+    body.game-fullscreen .settings-menu,
+    body.game-fullscreen .modal,
+    body.game-fullscreen .shell > section:not(#gamesView),
+    body.game-fullscreen #gamesView > section,
+    body.game-fullscreen #gameLayout > .game-card > .prompt,
+    body.game-fullscreen #gameLayout > .game-card > .progress,
+    body.game-fullscreen .game-side { display: none !important; }
+    body.game-fullscreen .shell { padding: 0 !important; max-width: 100vw !important; gap: 0 !important; }
+    body.game-fullscreen #gamesView {
+      display: block !important;
+      overflow: visible !important;
+      padding: 0 !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      background: transparent !important;
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+    body.game-fullscreen #gamesView::before { display: none !important; }
+    body.game-fullscreen #gameLayout {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      padding: 0;
+      margin: 0;
+      background: #4ec0ca;
+      display: grid;
+      place-items: stretch;
+      grid-template-columns: minmax(0, 1fr) !important;
+    }
+    body.game-fullscreen .game-card {
+      width: 100vw;
+      height: 100dvh;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      gap: 0;
+      display: grid;
+      place-items: stretch;
+    }
+    body.game-fullscreen #canvasWrap,
+    body.game-fullscreen #memoryBoard {
+      width: 100vw !important;
+      height: 100dvh !important;
+      min-height: 100dvh;
+      max-width: 100vw;
+      max-height: 100dvh;
+      border: 0;
+      border-radius: 0;
+      padding: 0;
+      box-shadow: none;
+    }
+    body.game-fullscreen #gameCanvas {
+      width: 100% !important;
+      height: 100% !important;
+      aspect-ratio: auto;
+      min-height: 0;
+      display: block;
+    }
+    body.game-fullscreen #memoryBoard {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      align-content: center;
+      padding: max(58px, env(safe-area-inset-top, 0px)) 12px max(14px, env(safe-area-inset-bottom, 0px));
+      background: linear-gradient(180deg, #dff7ff, #fff4d8);
+    }
+    .game-skip-btn {
+      position: fixed;
+      top: max(14px, env(safe-area-inset-top, 14px));
+      right: max(14px, env(safe-area-inset-right, 14px));
+      z-index: 10000;
+      min-height: 44px;
+      padding: 0 14px;
+      border-radius: 999px;
+      border: 2px solid rgba(0, 0, 0, .25);
+      background: rgba(255, 255, 255, .92);
+      color: #111;
+      font-weight: 950;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, .25);
+    }
+
     .memory-board {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1383,7 +1480,11 @@
       align-items: center;
       padding: 18px;
       border-radius: var(--radius);
-      background: color-mix(in srgb, var(--panel), var(--green) 6%);
+      overflow: hidden;
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--green), transparent 82%), transparent 48%),
+        linear-gradient(225deg, color-mix(in srgb, var(--gold), transparent 84%), transparent 52%),
+        var(--panel);
       border: 1px solid color-mix(in srgb, var(--line), var(--green) 14%);
     }
     .profile-hero .avatar-preview { margin: 0; }
@@ -1402,6 +1503,17 @@
       font-size: 12px;
     }
     .profile-form { display: grid; gap: 12px; padding: 14px; }
+    #avatarView .split {
+      grid-template-columns: minmax(280px, .82fr) minmax(0, 1.18fr);
+      align-items: stretch;
+    }
+    #profileLessons {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 8px;
+      max-height: 360px;
+      overflow: auto;
+    }
     .user-row .danger-mini {
       background: #e74856;
       color: #fff;
@@ -1688,6 +1800,7 @@
       .wallet { grid-template-columns: 1fr 1fr; }
       .kahoot-options { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
       .memory-board { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; min-height: 320px; padding: 10px; }
+      body.game-fullscreen #memoryBoard { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .memory-card { min-height: 72px; padding: 8px; font-size: 12px; }
       .choice-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
       .choice { min-height: 54px; font-size: 26px; }
@@ -1770,7 +1883,7 @@
         padding-right: max(6px, env(safe-area-inset-right));
       }
       .primary, .ghost, .danger, .tiny-btn, .nav-btn { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-      .nav-btn::before { content: ""; display: block; width: 100%; height: 100%; }
+      .nav-btn::before { display: none; }
     }
   </style>
 </head>
@@ -1861,9 +1974,7 @@
             <div class="wallet-chip"><span>💎</span><b id="mobileGemCount">0</b></div>
           </div>
         </section>
-        <div class="view-head">
-          <h1 class="hero-logo"><img src="romulingo_text.png" alt="Romulingo" onload="this.nextElementSibling.style.display='none';" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';"><span>Romulingo</span></h1>
-        </div>
+        <div class="view-head"></div>
         <div class="summary" id="pathSummary"></div>
         <div class="path" id="lessonPath"></div>
       </section>
@@ -2052,6 +2163,8 @@
             <button class="ghost" data-test-game="memory" type="button">Test Memory</button>
             <button class="ghost" data-test-game="catcher" type="button">Test Catcher</button>
             <button class="ghost" data-test-game="pop" type="button">Test Pop</button>
+            <button class="ghost" data-test-game="quiz" type="button">Test Quiz</button>
+            <button class="ghost" data-test-game="orbit" type="button">Test Orbit</button>
           </div>
           <div class="user-list" id="registeredUserList"></div>
         </section>
@@ -2170,7 +2283,7 @@
         lesson: "Lesson", host: "Host", join: "Join", createRoom: "Create room", start: "Start", next: "Next",
         players: "Players", question: "Question", roomCode: "Room code", startTitle: "Choose your name",
         face: "Face", hat: "Hat", item: "Item", flappy: "Flappy", breakout: "Breakout", memory: "Memory", catcher: "Catcher", pop: "Pop",
-        close: "Close", retry: "Retry", done: "Done", locked: "Locked", open: "Open", allWords: "All words",
+        quiz: "Quiz", orbit: "Orbit", close: "Close", retry: "Retry", done: "Done", locked: "Locked", open: "Open", allWords: "All words",
         notEnough: "Not enough", bought: "Bought", owned: "Owned", equipped: "Equipped", complete: "Complete", reward: "Reward",
         correct: "Correct", wrong: "Wrong", matched: "Matched", chooseGame: "Choose game", noPlayers: "No players",
         noScores: "No scores", joinWaiting: "Waiting", connected: "Connected", answerSent: "Answer sent",
@@ -2192,7 +2305,7 @@
         words: "Words", bestRun: "Best run", mode: "Mode", nextUp: "Next up",
         flappyDesc: "Fly through the correct answer lane.", breakoutDesc: "Break blocks to reveal the right word.",
         memoryDesc: "Match Latin with meaning pairs.", catcherDesc: "Catch the answer before it drops.",
-        popDesc: "Tap the right target under pressure."
+        popDesc: "Tap the right target under pressure.", quizDesc: "Pick the correct tile.", orbitDesc: "Catch the orbiting answer."
       },
       de: {
         kahoot: "Kahoot", settings: "Einstellungen", language: "Sprache", sfx: "SFX", darkMode: "Dunkelmodus",
@@ -2261,8 +2374,8 @@
       ,{ id: "item-owner", type: "item", emoji: "*", price: 0, currency: "coins", ownerOnly: true, name: { en: "Owner spark", de: "Owner-Funke" } }
     ];
 
-    const GAME_TYPES = ["flappy", "breakout", "memory", "catcher", "pop"];
-    const GAME_ICONS = { flappy: "FL", breakout: "BR", memory: "ME", catcher: "CA", pop: "PO" };
+    const GAME_TYPES = ["flappy", "breakout", "memory", "catcher", "pop", "quiz", "orbit"];
+    const GAME_ICONS = { flappy: "FL", breakout: "BR", memory: "ME", catcher: "CA", pop: "PO", quiz: "QZ", orbit: "OR" };
     const lessons = new Map();
     VOCABULARY.forEach((entry) => {
       if (!lessons.has(entry.lesson)) lessons.set(entry.lesson, []);
@@ -3256,7 +3369,7 @@
         bird: { x: 180, y: 260, vy: 0 }, obstacleX: 920, flappy: { coinPulse: 0 }, lastTime: 0,
         ball: { x: 420, y: 330, vx: 86, vy: -96, r: 10 }, paddle: { x: 360, y: 500, w: 210, h: 16 }, blocks: [], readyAt: 0,
         catcher: { x: 420, y: 490, w: 170, h: 24, items: [] },
-        pop: { targets: [] },
+        pop: { targets: [] }, quiz: { tiles: [] }, orbit: { targets: [], angle: 0 },
         memory: { cards: [], first: null, second: null, lock: false, matched: 0, moves: 0 }
       };
       $("#hudTitle").textContent = tr(type);
@@ -3266,8 +3379,7 @@
       $("#resultBox").innerHTML = "";
       $("#resultBox").classList.remove("show");
       $("#flapBtn").disabled = type !== "flappy";
-      if (type === "flappy") enterFlappyFullscreen();
-      else exitFlappyFullscreen();
+      enterFlappyFullscreen();
       resizeCanvas();
       if (type === "memory") setupMemory();
       else nextArcadeChallenge();
@@ -3276,7 +3388,7 @@
     }
 
     function enterFlappyFullscreen() {
-      document.body.classList.add("flappy-fullscreen");
+      document.body.classList.add("game-fullscreen");
       let backBtn = $("#flappyBackBtn");
       if (!backBtn) {
         backBtn = document.createElement("button");
@@ -3292,13 +3404,33 @@
         document.body.appendChild(backBtn);
       }
       backBtn.style.display = "inline-flex";
+      let skipBtn = $("#gameSkipBtn");
+      if (!skipBtn) {
+        skipBtn = document.createElement("button");
+        skipBtn.id = "gameSkipBtn";
+        skipBtn.className = "game-skip-btn";
+        skipBtn.type = "button";
+        skipBtn.textContent = "Skip";
+        skipBtn.addEventListener("click", skipGameAsOwner);
+        document.body.appendChild(skipBtn);
+      }
+      skipBtn.style.display = canUseRole("OWNER") ? "inline-flex" : "none";
       requestAnimationFrame(() => resizeCanvas());
     }
 
     function exitFlappyFullscreen() {
-      document.body.classList.remove("flappy-fullscreen");
+      document.body.classList.remove("game-fullscreen", "flappy-fullscreen");
       const backBtn = $("#flappyBackBtn");
       if (backBtn) backBtn.style.display = "none";
+      const skipBtn = $("#gameSkipBtn");
+      if (skipBtn) skipBtn.style.display = "none";
+    }
+
+    function skipGameAsOwner() {
+      if (!canUseRole("OWNER") || !game || game.finished) return;
+      game.correct = game.entries.length;
+      game.index = game.entries.length;
+      finishRun(false);
     }
 
     function nextArcadeChallenge() {
@@ -3313,6 +3445,8 @@
       if (game.type === "breakout") setupBreakoutBlocks();
       if (game.type === "catcher") setupCatcherItems();
       if (game.type === "pop") setupPopTargets();
+      if (game.type === "quiz") setupQuizTiles();
+      if (game.type === "orbit") setupOrbitTargets();
       updateHud();
     }
 
@@ -3339,9 +3473,9 @@
         h: blockH,
         alive: true
       }));
-      game.ball = { x: game.width * .5, y: game.height - 94, vx: 76 * (Math.random() > .5 ? 1 : -1), vy: -92, r: 10 };
+      game.ball = { x: game.width * .5, y: game.height - 94, vx: 0, vy: 0, r: 10, launched: false };
       game.paddle = { x: game.width * .5 - 105, y: game.height - 42, w: Math.min(240, Math.max(180, game.width * .24)), h: 16 };
-      game.readyAt = performance.now() + 950;
+      game.readyAt = Infinity;
     }
 
     function setupCatcherItems() {
@@ -3374,6 +3508,34 @@
           phase: Math.random() * Math.PI * 2
         };
       });
+    }
+
+    function setupQuizTiles() {
+      const cols = 2, rows = 2;
+      const gap = Math.max(12, game.width * .02);
+      const top = Math.max(92, game.height * .18);
+      const tileW = (game.width - gap * 3) / cols;
+      const tileH = Math.min(120, Math.max(76, (game.height - top - 60 - gap) / rows));
+      game.quiz.tiles = game.challenge.options.map((label, index) => ({
+        label,
+        correct: index === game.challenge.correctIndex,
+        x: gap + (index % cols) * (tileW + gap),
+        y: top + Math.floor(index / cols) * (tileH + gap),
+        w: tileW,
+        h: tileH
+      }));
+    }
+
+    function setupOrbitTargets() {
+      game.orbit.angle = Math.random() * Math.PI * 2;
+      game.orbit.targets = game.challenge.options.map((label, index) => ({
+        label,
+        correct: index === game.challenge.correctIndex,
+        phase: index * Math.PI / 2,
+        r: Math.min(74, Math.max(48, game.width * .065)),
+        x: 0,
+        y: 0
+      }));
     }
 
     function setupMemory() {
@@ -3448,6 +3610,7 @@
       if (game.type === "breakout") updateBreakout(delta);
       if (game.type === "catcher") updateCatcher(delta);
       if (game.type === "pop") updatePop(delta);
+      if (game.type === "orbit") updateOrbit(delta);
       drawGame();
       raf = requestAnimationFrame(loop);
     }
@@ -3514,7 +3677,7 @@
     function updateBreakout(delta) {
       const ball = game.ball;
       const paddle = game.paddle;
-      if (performance.now() < game.readyAt) {
+      if (!ball.launched || performance.now() < game.readyAt) {
         ball.x = paddle.x + paddle.w / 2;
         ball.y = paddle.y - 18;
         return;
@@ -3527,7 +3690,11 @@
         game.hearts -= 1;
         playSfx("wrong");
         if (game.hearts <= 0) finishRun();
-        else setupBreakoutBlocks();
+        else {
+          ball.launched = false;
+          ball.vx = 0;
+          ball.vy = 0;
+        }
         return;
       }
       if (ball.x > paddle.x && ball.x < paddle.x + paddle.w && ball.y + ball.r > paddle.y && ball.y - ball.r < paddle.y + paddle.h && ball.vy > 0) {
@@ -3540,7 +3707,15 @@
         if (ball.x + ball.r > block.x && ball.x - ball.r < block.x + block.w && ball.y + ball.r > block.y && ball.y - ball.r < block.y + block.h) {
           block.alive = false;
           ball.vy *= -1;
-          resolveArcade(block.correct);
+          if (block.correct) resolveArcade(true);
+          else {
+            game.misses += 1;
+            game.hearts -= 1;
+            playSfx("wrong");
+            updateHud();
+            if (game.hearts <= 0) finishRun();
+            if (!game.blocks.some((candidate) => candidate.alive && candidate.correct)) resolveArcade(false);
+          }
           break;
         }
       }
@@ -3589,7 +3764,7 @@
       game.finished = true;
       game.active = false;
       cancelAnimationFrame(raf);
-      if (game.type === "flappy") exitFlappyFullscreen();
+      exitFlappyFullscreen();
       const stars = manual ? 1 : calculateStars();
       const oldStars = Number(state.stars[game.lessonNumber]) || 0;
       const oldReward = rewardForStars(oldStars);
@@ -3646,6 +3821,8 @@
         if (game.challenge && game.type === "breakout") setupBreakoutBlocks();
         if (game.challenge && game.type === "catcher") setupCatcherItems();
         if (game.challenge && game.type === "pop") setupPopTargets();
+        if (game.challenge && game.type === "quiz") setupQuizTiles();
+        if (game.challenge && game.type === "orbit") setupOrbitTargets();
       }
       drawGame();
     }
@@ -3682,6 +3859,8 @@
       if (game.type === "breakout") drawBreakout(ctx, w, h);
       if (game.type === "catcher") drawCatcher(ctx, w, h);
       if (game.type === "pop") drawPop(ctx, w, h);
+      if (game.type === "quiz") drawQuiz(ctx, w, h);
+      if (game.type === "orbit") drawOrbit(ctx, w, h);
     }
 
     function drawFlappy(ctx, w, h) {
@@ -3949,7 +4128,12 @@
       ctx.beginPath();
       ctx.arc(game.ball.x, game.ball.y, game.ball.r, 0, Math.PI * 2);
       ctx.fill();
-      if (performance.now() < game.readyAt) {
+      if (!game.ball.launched) {
+        ctx.fillStyle = "rgba(23, 33, 43, .72)";
+        ctx.font = "900 22px Inter, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("tap / space", w / 2, h - 88);
+      } else if (performance.now() < game.readyAt) {
         ctx.fillStyle = "rgba(23, 33, 43, .72)";
         ctx.font = "900 22px Inter, sans-serif";
         ctx.textAlign = "center";
@@ -4016,6 +4200,61 @@
       ctx.fillText("tap", w / 2, h - 20);
     }
 
+    function drawQuiz(ctx, w, h) {
+      ctx.fillStyle = "#17212b";
+      ctx.font = "900 20px Inter, sans-serif";
+      ctx.textAlign = "center";
+      wrapText(ctx, game.challenge.prompt, w / 2, 54, w - 42, 24, 2);
+      game.quiz.tiles.forEach((tile, index) => {
+        const grad = ctx.createLinearGradient(tile.x, tile.y, tile.x + tile.w, tile.y + tile.h);
+        grad.addColorStop(0, index % 2 ? "#24c46f" : "#3b82f6");
+        grad.addColorStop(1, index % 2 ? "#78bf00" : "#8057ff");
+        ctx.fillStyle = grad;
+        roundRect(ctx, tile.x, tile.y, tile.w, tile.h, 12);
+        ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,.94)";
+        roundRect(ctx, tile.x + 10, tile.y + 10, tile.w - 20, tile.h - 20, 10);
+        ctx.fill();
+        ctx.fillStyle = "#17212b";
+        ctx.font = `900 ${Math.max(15, Math.min(24, w / 42))}px Inter, sans-serif`;
+        wrapText(ctx, tile.label, tile.x + tile.w / 2, tile.y + tile.h / 2, tile.w - 42, Math.max(18, w / 38), 3);
+      });
+    }
+
+    function drawOrbit(ctx, w, h) {
+      ctx.fillStyle = "#17212b";
+      ctx.font = "900 20px Inter, sans-serif";
+      ctx.textAlign = "center";
+      wrapText(ctx, game.challenge.prompt, w / 2, 52, w - 42, 24, 2);
+      const cx = w / 2;
+      const cy = h / 2 + 24;
+      const radius = Math.min(w, h) * .28;
+      ctx.strokeStyle = "rgba(23,33,43,.14)";
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.stroke();
+      game.orbit.targets.forEach((target, index) => {
+        const angle = game.orbit.angle + target.phase;
+        target.x = cx + Math.cos(angle) * radius;
+        target.y = cy + Math.sin(angle) * radius;
+        const grad = ctx.createRadialGradient(target.x - target.r * .25, target.y - target.r * .3, target.r * .1, target.x, target.y, target.r);
+        grad.addColorStop(0, "#fff");
+        grad.addColorStop(.5, index % 2 ? "#c7f46b" : "#ffd75a");
+        grad.addColorStop(1, index % 2 ? "#4aa921" : "#d88c10");
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(target.x, target.y, target.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "rgba(23,33,43,.2)";
+        ctx.lineWidth = 4;
+        ctx.stroke();
+        ctx.fillStyle = "#17212b";
+        ctx.font = `900 ${Math.max(12, Math.min(18, target.r * .34))}px Inter, sans-serif`;
+        wrapText(ctx, target.label, target.x, target.y, target.r * 1.55, Math.max(14, target.r * .36), 3);
+      });
+    }
+
     function updateCatcher(delta) {
       const catcher = game.catcher;
       for (const item of catcher.items) {
@@ -4044,6 +4283,10 @@
         target.x += Math.cos(now + target.phase) * 10 * delta;
         target.y += Math.sin(now * 1.2 + target.phase + index) * 10 * delta;
       });
+    }
+
+    function updateOrbit(delta) {
+      game.orbit.angle += delta * 1.25;
     }
 
     function wrapText(ctx, text, x, y, maxWidth, lineHeight, maxLines) {
@@ -4083,6 +4326,16 @@
       }
     }
 
+    function launchBreakout() {
+      if (!game || game.type !== "breakout" || !game.active || game.ball.launched) return;
+      const offset = ((game.ball.x - (game.paddle.x + game.paddle.w / 2)) / game.paddle.w) || 0;
+      game.ball.launched = true;
+      game.ball.vx = Math.max(-150, Math.min(150, offset * 230 + (Math.random() > .5 ? 36 : -36)));
+      game.ball.vy = -210;
+      game.readyAt = 0;
+      playSfx("click");
+    }
+
     function movePaddle(clientX) {
       if (!game || game.type !== "breakout") return;
       const rect = $("#gameCanvas").getBoundingClientRect();
@@ -4101,10 +4354,18 @@
       const x = event.clientX - rect.left;
       const y = event.clientY - rect.top;
       if (game.type === "flappy") flap();
-      if (game.type === "breakout") movePaddle(event.clientX);
+      if (game.type === "breakout") { movePaddle(event.clientX); launchBreakout(); }
       if (game.type === "catcher") moveCatcher(event.clientX);
       if (game.type === "pop" && game.active && !game.challenge.resolved) {
         const target = game.pop.targets.find((item) => Math.hypot(item.x - x, item.y - y) <= item.r);
+        if (target) { playSfx("pop"); resolveArcade(target.correct); }
+      }
+      if (game.type === "quiz" && game.active && !game.challenge.resolved) {
+        const tile = game.quiz.tiles.find((item) => x >= item.x && x <= item.x + item.w && y >= item.y && y <= item.y + item.h);
+        if (tile) resolveArcade(tile.correct);
+      }
+      if (game.type === "orbit" && game.active && !game.challenge.resolved) {
+        const target = game.orbit.targets.find((item) => Math.hypot(item.x - x, item.y - y) <= item.r);
         if (target) resolveArcade(target.correct);
       }
     }
@@ -4123,7 +4384,7 @@
         const gain = audioContext.createGain();
         const map = {
           click: [360, .04, "sine"], flap: [520, .05, "triangle"], correct: [720, .09, "sine"],
-          wrong: [150, .14, "sawtooth"], coin: [980, .16, "triangle"], start: [440, .08, "sine"], finish: [620, .12, "sine"]
+          wrong: [150, .14, "sawtooth"], coin: [980, .16, "triangle"], start: [440, .08, "sine"], finish: [620, .12, "sine"], pop: [1250, .06, "square"]
         };
         const [freq, dur, wave] = map[type] || map.click;
         osc.type = wave;
@@ -4420,6 +4681,14 @@
     function bindEvents() {
       document.addEventListener("pointerdown", unlockAudio, { once: true });
       $$(".nav-btn").forEach((button) => button.addEventListener("click", () => showView(button.dataset.view)));
+      $(".brand").addEventListener("click", () => {
+        const brand = $(".brand");
+        brand.classList.remove("logo-pop");
+        void brand.offsetWidth;
+        brand.classList.add("logo-pop");
+        exitFlappyFullscreen();
+        showView("path");
+      });
       $("#profileTop").addEventListener("click", () => showView("avatar"));
       $("#settingsBtn").addEventListener("click", () => $("#settingsMenu").classList.toggle("show"));
       $("#langTop").addEventListener("click", toggleLang);
@@ -4451,7 +4720,7 @@
       $("#gameCanvas").addEventListener("pointerdown", handleCanvasPointer);
       $("#gameCanvas").addEventListener("pointermove", (event) => { movePaddle(event.clientX); moveCatcher(event.clientX); });
       window.addEventListener("keydown", (event) => {
-        if (event.code === "Space" || event.code === "ArrowUp") { event.preventDefault(); flap(); }
+        if (event.code === "Space" || event.code === "ArrowUp") { event.preventDefault(); flap(); launchBreakout(); }
         if (event.code === "ArrowLeft" && game?.type === "breakout") game.paddle.x = Math.max(0, game.paddle.x - 34);
         if (event.code === "ArrowRight" && game?.type === "breakout") game.paddle.x = Math.min(game.width - game.paddle.w, game.paddle.x + 34);
         if (event.code === "ArrowLeft" && game?.type === "catcher") game.catcher.x = Math.max(0, game.catcher.x - 38);
