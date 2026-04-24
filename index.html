@@ -1058,7 +1058,19 @@
     body.flappy-fullscreen #gameLayout > .game-card > *:not(#canvasWrap),
     body.flappy-fullscreen .game-side { display: none !important; }
     body.flappy-fullscreen .shell { padding: 0 !important; max-width: 100vw !important; gap: 0 !important; }
-    body.flappy-fullscreen #gamesView { padding: 0 !important; background: #4ec0ca !important; }
+    body.flappy-fullscreen #gamesView {
+      display: block !important;
+      overflow: visible !important;
+      padding: 0 !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      background: transparent !important;
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+    body.flappy-fullscreen #gamesView::before { display: none !important; }
     body.flappy-fullscreen #gameLayout {
       position: fixed;
       inset: 0;
@@ -2033,7 +2045,14 @@
           <div class="class-list" id="classList"></div>
         </section>
         <section id="adminTools" class="form-grid">
-          <h3 data-i18n="registeredUsers">Registered users</h3>
+          <div class="toolbar"><h3 data-i18n="registeredUsers">Registered users</h3><button class="tiny-btn" id="refreshUsersBtn" type="button">Refresh</button></div>
+          <div class="mini-grid">
+            <button class="ghost" data-test-game="flappy" type="button">Test Flappy</button>
+            <button class="ghost" data-test-game="breakout" type="button">Test Breakout</button>
+            <button class="ghost" data-test-game="memory" type="button">Test Memory</button>
+            <button class="ghost" data-test-game="catcher" type="button">Test Catcher</button>
+            <button class="ghost" data-test-game="pop" type="button">Test Pop</button>
+          </div>
           <div class="user-list" id="registeredUserList"></div>
         </section>
         <section id="ownerTools" class="form-grid">
@@ -2218,7 +2237,9 @@
       { id: "face-brave", type: "face", emoji: "😤", price: 120, currency: "coins", name: { en: "Brave", de: "Mutig" } },
       { id: "face-angel", type: "face", emoji: "😇", price: 4, currency: "gems", name: { en: "Bright", de: "Hell" } },
       { id: "face-party", type: "face", emoji: "🥳", price: 7, currency: "gems", name: { en: "Party", de: "Party" } },
+      { id: "face-owner", type: "face", emoji: "O", price: 0, currency: "coins", ownerOnly: true, name: { en: "Owner", de: "Owner" } },
       { id: "hat-none", type: "hat", emoji: "", price: 0, currency: "coins", name: { en: "None", de: "Kein Hut" } },
+      { id: "hat-owner", type: "hat", emoji: "V", price: 0, currency: "coins", ownerOnly: true, name: { en: "Owner crest", de: "Owner-Wappen" } },
       { id: "hat-grad", type: "hat", emoji: "🎓", price: 0, currency: "coins", name: { en: "Scholar", de: "Gelehrt" } },
       { id: "hat-crown", type: "hat", emoji: "👑", price: 8, currency: "gems", name: { en: "Crown", de: "Krone" } },
       { id: "hat-cap", type: "hat", emoji: "🧢", price: 0, currency: "coins", name: { en: "Cap", de: "Kappe" } },
@@ -2237,6 +2258,7 @@
       { id: "item-amphora", type: "item", emoji: "🏺", price: 110, currency: "coins", name: { en: "Amphora", de: "Amphore" } },
       { id: "item-compass", type: "item", emoji: "🧭", price: 100, currency: "coins", name: { en: "Compass", de: "Kompass" } },
       { id: "item-trident", type: "item", emoji: "🔱", price: 7, currency: "gems", name: { en: "Trident", de: "Dreizack" } }
+      ,{ id: "item-owner", type: "item", emoji: "*", price: 0, currency: "coins", ownerOnly: true, name: { en: "Owner spark", de: "Owner-Funke" } }
     ];
 
     const GAME_TYPES = ["flappy", "breakout", "memory", "catcher", "pop"];
@@ -2256,7 +2278,7 @@
       coins: 0,
       gems: 0,
       stars: {},
-      inventory: AVATAR_ITEMS.filter((item) => item.price === 0).map((item) => item.id),
+      inventory: AVATAR_ITEMS.filter((item) => item.price === 0 && !item.ownerOnly).map((item) => item.id),
       avatar: { face: "face-smile", hat: "hat-none", item: "item-scroll" },
       account: { uid: "", username: "RG-Discipulus", role: "STUDENT", registered: false, isGuest: false },
       localUsers: {},
@@ -2293,7 +2315,9 @@
       users: [],
       classes: [],
       userUnsub: null,
-      classUnsub: null
+      classUnsub: null,
+      userFetchPending: false,
+      userFetchAt: 0
     };
     let tutorialStep = 0;
 
@@ -2323,6 +2347,17 @@
       return String(state.account?.role || "STUDENT").toUpperCase();
     }
     function canUseRole(minRole) { return rolePower(currentRole()) >= rolePower(minRole); }
+    function ownerItemIds() { return AVATAR_ITEMS.filter((item) => item.ownerOnly).map((item) => item.id); }
+    function syncOwnerInventory() {
+      if (!state.inventory) state.inventory = [];
+      if (!canUseRole("OWNER")) return;
+      ownerItemIds().forEach((id) => {
+        if (!state.inventory.includes(id)) state.inventory.push(id);
+      });
+    }
+    function availableAvatarItems() {
+      return AVATAR_ITEMS.filter((item) => !item.ownerOnly || canUseRole("OWNER"));
+    }
     function cleanUsername(value) { return String(value || "RG-Discipulus").trim().replace(/\s+/g, " ").slice(0, 18) || "RG-Discipulus"; }
     function usernameKey(value) { return cleanUsername(value).toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "rg_discipulus"; }
     function authEmail(username) { return `${usernameKey(username)}@romulingo.local`; }
@@ -2342,7 +2377,42 @@
     }
 
     function allRegisteredUsers() {
-      return cloud.enabled ? cloud.users : Object.values(state.localUsers || {});
+      const byKey = new Map();
+      localStorageUsers().forEach((user) => {
+        if (user?.username) byKey.set(usernameKey(user.username), user);
+      });
+      Object.values(state.localUsers || {}).forEach((user) => {
+        if (user?.username) byKey.set(usernameKey(user.username), user);
+      });
+      if (state.account?.registered) {
+        const self = localUserFromState(state.localUsers?.[usernameKey(state.account.username || state.playerName)]?.passwordHash || "");
+        byKey.set(usernameKey(self.username), self);
+      }
+      if (cloud.enabled) {
+        (cloud.users || []).forEach((user) => {
+          if (user?.username) byKey.set(usernameKey(user.username), user);
+        });
+      }
+      const removed = state.removedUsers || {};
+      return [...byKey.values()]
+        .filter((user) => !removed[usernameKey(user.username)])
+        .sort((a, b) => String(a.username || "").localeCompare(String(b.username || "")));
+    }
+
+    function hideUserEverywhere(username) {
+      const key = usernameKey(username);
+      if (!state.removedUsers) state.removedUsers = {};
+      state.removedUsers[key] = true;
+      if (state.localUsers) delete state.localUsers[key];
+      cloud.users = (cloud.users || []).filter((user) => usernameKey(user.username) !== key);
+      Object.keys(localStorage).forEach((storageKey) => {
+        if (!storageKey.toLowerCase().includes("romulingo")) return;
+        try {
+          const data = JSON.parse(localStorage.getItem(storageKey) || "{}");
+          if (data.localUsers) delete data.localUsers[key];
+          localStorage.setItem(storageKey, JSON.stringify(data));
+        } catch {}
+      });
     }
 
     function findRegisteredUser(username) {
@@ -2364,6 +2434,42 @@
         passwordHash,
         updatedAt: Date.now()
       };
+    }
+
+    function rememberUsers(users) {
+      if (!state.localUsers) state.localUsers = {};
+      (users || []).forEach((user) => {
+        if (!user?.username) return;
+        const key = usernameKey(user.username);
+        const old = state.localUsers[key] || {};
+        state.localUsers[key] = { ...old, ...user, passwordHash: old.passwordHash || user.passwordHash || "" };
+      });
+      saveState();
+    }
+
+    function localStorageUsers() {
+      const found = [];
+      try {
+        for (let i = 0; i < localStorage.length; i += 1) {
+          const key = localStorage.key(i);
+          if (!key || !key.toLowerCase().includes("romulingo")) continue;
+          const data = JSON.parse(localStorage.getItem(key) || "{}");
+          Object.values(data.localUsers || {}).forEach((user) => { if (user?.username) found.push(user); });
+          if (data.account?.registered && (data.playerName || data.account.username)) {
+            found.push({
+              uid: data.account.uid || "",
+              username: data.account.username || data.playerName,
+              role: data.account.role || "STUDENT",
+              coins: data.coins || 0,
+              gems: data.gems || 0,
+              stars: data.stars || {},
+              avatar: data.avatar,
+              inventory: data.inventory || []
+            });
+          }
+        }
+      } catch {}
+      return found;
     }
 
     function exposeUserAliases() {
@@ -2388,6 +2494,7 @@
       state.avatar = user.avatar || state.avatar;
       state.inventory = Array.isArray(user.inventory) ? user.inventory : state.inventory;
       state.started = true;
+      syncOwnerInventory();
       saveState();
     }
 
@@ -2401,11 +2508,13 @@
         cloud.auth = firebase.auth();
         cloud.db = firebase.firestore();
         cloud.enabled = true;
+        subscribeUsers();
+        subscribeClasses();
+        refreshRegisteredUsersOnce(true);
         cloud.auth.onAuthStateChanged(async (user) => {
           if (!user) {
             if (cloud.userUnsub) { cloud.userUnsub(); cloud.userUnsub = null; }
             if (cloud.classUnsub) { cloud.classUnsub(); cloud.classUnsub = null; }
-            cloud.users = [];
             cloud.classes = [];
             renderRolePanel();
             return;
@@ -2417,6 +2526,7 @@
           } catch (e) { console.warn("user fetch", e); }
           subscribeUsers();
           subscribeClasses();
+          refreshRegisteredUsersOnce(true);
           renderAll();
         });
       } catch (error) {
@@ -2431,14 +2541,54 @@
         cloud.userUnsub = cloud.db.collection("users").onSnapshot((snapshot) => {
           cloud.users = snapshot.docs.map((doc) => ({ uid: doc.id, ...doc.data() }));
           cloud.users.sort((a, b) => String(a.username || "").localeCompare(String(b.username || "")));
+          rememberUsers(cloud.users);
           exposeUserAliases();
           renderRolePanel();
           renderAll();
         }, (error) => {
-          console.error("subscribeUsers", error);
-          toast("Users: " + (error?.message || error?.code || "permission"));
+          console.warn("subscribeUsers", error);
+          cloud.users = [];
+          renderRolePanel();
         });
       } catch (e) { console.error(e); }
+    }
+
+    async function refreshRegisteredUsersOnce(force = false) {
+      if (!cloud.enabled || cloud.userFetchPending) return;
+      const now = Date.now();
+      if (!force && now - cloud.userFetchAt < 5000) return;
+      cloud.userFetchPending = true;
+      try {
+        const users = [];
+        try {
+          const snapshot = await cloud.db.collection("users").get();
+          users.push(...snapshot.docs.map((doc) => ({ uid: doc.id, ...doc.data() })));
+        } catch (error) { console.warn("users list", error); }
+        try {
+          const names = await cloud.db.collection("usernames").get();
+          users.push(...names.docs.map((doc) => ({ uid: doc.data().uid || "", username: doc.data().username || doc.id, role: "STUDENT" })));
+        } catch (error) { console.warn("usernames list", error); }
+        try {
+          const directory = await cloud.db.collection("directory").doc("users").get();
+          const data = directory.exists ? directory.data() : {};
+          users.push(...Object.values(data || {}).filter((user) => user?.username));
+        } catch (error) { console.warn("directory list", error); }
+        const byKey = new Map();
+        [...cloud.users, ...users].forEach((user) => {
+          if (!user?.username) return;
+          const key = usernameKey(user.username);
+          byKey.set(key, { ...(byKey.get(key) || {}), ...user });
+        });
+        cloud.users = [...byKey.values()].sort((a, b) => String(a.username || "").localeCompare(String(b.username || "")));
+        cloud.userFetchAt = now;
+        rememberUsers(cloud.users);
+        exposeUserAliases();
+        renderRegisteredUsers();
+      } catch (error) {
+        console.warn("refreshRegisteredUsers", error);
+      } finally {
+        cloud.userFetchPending = false;
+      }
     }
 
     function subscribeClasses() {
@@ -2448,7 +2598,7 @@
           cloud.classes = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
           renderRolePanel();
         }, (error) => {
-          console.error("subscribeClasses", error);
+          console.warn("subscribeClasses", error);
         });
       } catch (e) { console.error(e); }
     }
@@ -2499,6 +2649,10 @@
             tx.set(nameRef, { uid, username, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
             tx.set(userRef, { ...userPayload(), role: initialRole, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
           });
+          await cloud.db.collection("directory").doc("users").set({
+            [usernameKey(username)]: { uid, username, role: initialRole }
+          }, { merge: true }).catch(() => {});
+          cloud.users.push({ uid, username, role: initialRole, ...userPayload() });
           state.account = { uid, username, role: initialRole, registered: true };
         } catch (error) {
           await credential.user.delete().catch(() => {});
@@ -2510,8 +2664,10 @@
         state.account = { uid: `local-${key}`, username, role: initialRole, registered: true };
         state.localUsers[key] = localUserFromState(passwordHash);
       }
+      rememberUsers([{ uid: state.account.uid, username, role: initialRole, coins: state.coins, gems: state.gems, stars: state.stars, avatar: state.avatar, inventory: state.inventory }]);
       state.started = true;
       if (state.account) state.account.isGuest = false;
+      syncOwnerInventory();
       saveState();
       exposeUserAliases();
       applyGuestMode();
@@ -2544,6 +2700,7 @@
       }
       state.started = true;
       if (state.account) state.account.isGuest = false;
+      syncOwnerInventory();
       saveState();
       applyGuestMode();
       $("#startModal").classList.remove("show");
@@ -2641,6 +2798,7 @@
     }
 
     function renderAll() {
+      syncOwnerInventory();
       renderStats();
       renderPath();
       renderSelectors();
@@ -2728,10 +2886,10 @@
     function renderSelectors() {
       const currentLesson = Number($("#lessonSelect").value);
       $("#lessonSelect").innerHTML = lessonNumbers.map((lessonNumber) => {
-        const disabled = !canAccessLesson(lessonNumber) || lessonComplete(lessonNumber);
+        const disabled = !canAccessLesson(lessonNumber);
         return `<option value="${lessonNumber}" ${disabled ? "disabled" : ""}>${tr("lesson")} ${lessonNumber}</option>`;
       }).join("");
-      const preferredLesson = currentLesson && canAccessLesson(currentLesson) && !lessonComplete(currentLesson)
+      const preferredLesson = currentLesson && canAccessLesson(currentLesson)
         ? currentLesson
         : nextPlayableLesson();
       $("#lessonSelect").value = String(preferredLesson);
@@ -2771,11 +2929,11 @@
       const bestStat = $("#gameBestStat"); if (bestStat) bestStat.textContent = `${bestStars}/4`;
       const modeStat = $("#gameModeStat"); if (modeStat) modeStat.textContent = tr(selectedGameType);
       const startButton = $("#startSelectedGame");
-      if (startButton) startButton.disabled = !canAccessLesson(lessonNumber) || lessonComplete(lessonNumber);
+      if (startButton) startButton.disabled = !canAccessLesson(lessonNumber);
     }
 
     function renderShop() {
-      $("#shopGrid").innerHTML = AVATAR_ITEMS.map((item) => {
+      $("#shopGrid").innerHTML = availableAvatarItems().map((item) => {
         const owned = state.inventory.includes(item.id);
         const equipped = state.avatar[item.type] === item.id;
         const price = item.price ? `${item.price} ${item.currency === "gems" ? "💎" : "🪙"}` : "0 🪙";
@@ -2815,6 +2973,7 @@
       if (cloudStatus) cloudStatus.textContent = cloud.enabled ? tr("cloudReady") : tr("cloudLocal");
       const createTop = $("#createClassTop");
       if (createTop) createTop.hidden = !isTeacher;
+      if (isOwner || isAdmin || isTeacher) refreshRegisteredUsersOnce();
       renderRegisteredUsers();
       renderClasses();
     }
@@ -2911,10 +3070,17 @@
       if (!confirm(`Remove ${user.username}?`)) return;
       const key = usernameKey(user.username);
       if (cloud.enabled && user.uid) {
-        await cloud.db.collection("users").doc(user.uid).delete().catch(() => {});
-        await cloud.db.collection("usernames").doc(key).delete().catch(() => {});
+          await cloud.db.collection("users").doc(user.uid).delete().catch(() => {});
+          await cloud.db.collection("usernames").doc(key).delete().catch(() => {});
+          await cloud.db.collection("directory").doc("users").set({ [key]: firebase.firestore.FieldValue.delete() }, { merge: true }).catch(() => {});
+          const classSnap = await cloud.db.collection("classes").get().catch(() => null);
+          if (classSnap) {
+            classSnap.docs.forEach((doc) => {
+              cloud.db.collection("classes").doc(doc.id).set({ students: firebase.firestore.FieldValue.arrayRemove(user.username) }, { merge: true }).catch(() => {});
+            });
+          }
       }
-      if (state.localUsers && state.localUsers[key]) delete state.localUsers[key];
+      hideUserEverywhere(user.username);
       saveState();
       exposeUserAliases();
       renderAll();
@@ -3028,6 +3194,7 @@
     function buyOrEquip(id) {
       const item = itemById(id);
       if (!item) return;
+      if (item.ownerOnly && !canUseRole("OWNER")) return;
       if (!state.inventory.includes(id)) {
         if (state[item.currency] < item.price) {
           toast(`${tr("notEnough")} ${item.currency === "gems" ? "💎" : "🪙"}`);
@@ -3060,9 +3227,21 @@
 
     function closeGamePicker() {}
 
+    function startTestGame(type) {
+      if (!GAME_TYPES.includes(type)) return;
+      const lessonNumber = Number($("#lessonSelect")?.value) || nextPlayableLesson() || 1;
+      const savedStars = { ...state.stars };
+      state.stars = {};
+      lessonNumbers.forEach((n) => { if (n < lessonNumber) state.stars[n] = 4; });
+      selectedGameType = type;
+      startGame(lessonNumber, type);
+      state.stars = savedStars;
+      saveState();
+      toast("Test");
+    }
+
     function startGame(lessonNumber, type = gameForLesson(lessonNumber)) {
       if (!canAccessLesson(lessonNumber)) { toast(tr("lessonLocked")); return; }
-      if (lessonComplete(lessonNumber)) { toast(tr("lessonComplete")); return; }
       closeGamePicker();
       selectedGameType = type;
       showView("games");
@@ -3074,7 +3253,7 @@
       game = {
         type, lessonNumber, entries, index: 0, correct: 0, misses: 0, hearts: type === "memory" ? 99 : 3,
         active: true, finished: false, challenge: null, width: 960, height: 540,
-        bird: { x: 180, y: 260, vy: 0 }, obstacleX: 920, lastTime: 0,
+        bird: { x: 180, y: 260, vy: 0 }, obstacleX: 920, flappy: { coinPulse: 0 }, lastTime: 0,
         ball: { x: 420, y: 330, vx: 86, vy: -96, r: 10 }, paddle: { x: 360, y: 500, w: 210, h: 16 }, blocks: [], readyAt: 0,
         catcher: { x: 420, y: 490, w: 170, h: 24, items: [] },
         pop: { targets: [] },
@@ -3089,9 +3268,9 @@
       $("#flapBtn").disabled = type !== "flappy";
       if (type === "flappy") enterFlappyFullscreen();
       else exitFlappyFullscreen();
+      resizeCanvas();
       if (type === "memory") setupMemory();
       else nextArcadeChallenge();
-      resizeCanvas();
       if (type !== "memory") raf = requestAnimationFrame(loop);
       playSfx("start");
     }
@@ -3129,6 +3308,7 @@
         game.obstacleX = game.width + 80;
         game.bird.y = game.height * .52;
         game.bird.vy = -30;
+        game.flappy = { coinPulse: Math.random() * Math.PI * 2 };
       }
       if (game.type === "breakout") setupBreakoutBlocks();
       if (game.type === "catcher") setupCatcherItems();
@@ -3274,18 +3454,61 @@
 
     function updateFlappy(delta) {
       const b = game.bird;
-      b.vy += 700 * delta;
+      const geometry = flappyGeometry(game.width, game.height);
+      const previousPipeX = game.obstacleX;
+      const previousCoinX = previousPipeX + geometry.pipeW / 2;
+      b.vy += geometry.gravity * delta;
       b.y += b.vy * delta;
-      game.obstacleX -= 128 * delta;
-      if (b.y < 18 || b.y > game.height - 18) {
-        b.y = Math.max(18, Math.min(game.height - 18, b.y));
+      game.obstacleX -= geometry.speed * delta;
+      const currentGeometry = flappyGeometry(game.width, game.height);
+      const floorY = game.height - geometry.groundH - geometry.birdR;
+      if (b.y < geometry.birdR || b.y > floorY) {
+        b.y = Math.max(geometry.birdR, Math.min(floorY, b.y));
         b.vy = 0;
       }
-      const pipeW = Math.min(178, Math.max(124, game.width * .17));
-      if (game.obstacleX + pipeW < b.x && !game.challenge.resolved) {
-        const lane = Math.min(3, Math.max(0, Math.floor(b.y / (game.height / 4))));
-        resolveArcade(lane === game.challenge.correctIndex);
+      if (game.challenge.resolved) return;
+      const lane = flappyLaneAtY(b.y, currentGeometry);
+      const insidePipeX = b.x + currentGeometry.birdR > currentGeometry.pipeX && b.x - currentGeometry.birdR < currentGeometry.pipeX + currentGeometry.pipeW;
+      if (insidePipeX && !flappyYInHole(b.y, lane, currentGeometry)) {
+        resolveArcade(false);
+        return;
       }
+      const currentCoinX = game.obstacleX + currentGeometry.pipeW / 2;
+      const crossedCoins = previousCoinX > b.x && currentCoinX <= b.x + currentGeometry.birdR;
+      if (crossedCoins) {
+        const hitLane = currentGeometry.coinYs.findIndex((coinY) => Math.abs(b.y - coinY) <= currentGeometry.coinR * 1.35 + currentGeometry.birdR * .75);
+        resolveArcade(hitLane === game.challenge.correctIndex);
+      }
+    }
+
+    function flappyGeometry(w, h) {
+      const groundH = Math.max(58, h * .09);
+      const playTop = Math.max(74, h * .11);
+      const playBottom = h - groundH - 10;
+      const playH = Math.max(220, playBottom - playTop);
+      const laneH = playH / 4;
+      const pipeW = Math.min(118, Math.max(78, w * .14));
+      const pipeX = game?.obstacleX ?? w + 80;
+      const holeH = Math.max(58, Math.min(laneH * .68, h * .13));
+      const birdR = Math.max(18, Math.min(28, w / 28));
+      const coinR = Math.max(22, Math.min(40, w / 20));
+      const coinX = pipeX + pipeW / 2;
+      const coinYs = Array.from({ length: 4 }, (_, index) => playTop + laneH * (index + .5));
+      return {
+        groundH, playTop, playBottom, playH, laneH, pipeW, pipeX, holeH,
+        birdR, coinR, coinX, coinYs,
+        speed: Math.max(124, Math.min(185, w * .16)),
+        gravity: Math.max(620, Math.min(760, h * 1.18))
+      };
+    }
+
+    function flappyLaneAtY(y, geometry) {
+      return Math.min(3, Math.max(0, Math.floor((y - geometry.playTop) / geometry.laneH)));
+    }
+
+    function flappyYInHole(y, lane, geometry) {
+      const center = geometry.coinYs[lane];
+      return y > center - geometry.holeH / 2 && y < center + geometry.holeH / 2;
     }
 
     function updateBreakout(delta) {
@@ -3420,9 +3643,9 @@
         game.width = width;
         game.height = height;
         game.bird.x = width * .2;
-        if (game.type === "breakout") setupBreakoutBlocks();
-        if (game.type === "catcher") setupCatcherItems();
-        if (game.type === "pop") setupPopTargets();
+        if (game.challenge && game.type === "breakout") setupBreakoutBlocks();
+        if (game.challenge && game.type === "catcher") setupCatcherItems();
+        if (game.challenge && game.type === "pop") setupPopTargets();
       }
       drawGame();
     }
@@ -3462,103 +3685,128 @@
     }
 
     function drawFlappy(ctx, w, h) {
-      // Sky
-      ctx.fillStyle = "#4ec0ca";
+      const geometry = flappyGeometry(w, h);
+      const sky = ctx.createLinearGradient(0, 0, 0, h);
+      sky.addColorStop(0, "#68d7e9");
+      sky.addColorStop(.58, "#bdf4f0");
+      sky.addColorStop(1, "#fff0c8");
+      ctx.fillStyle = sky;
       ctx.fillRect(0, 0, w, h);
 
-      // City silhouette
-      const groundH = Math.max(56, h * .08);
-      ctx.fillStyle = "#3aa8b3";
-      const cityBaseY = h - groundH;
-      for (let i = 0; i < 9; i += 1) {
-        const bw = 32 + ((i * 13) % 24);
-        const bh = 36 + ((i * 17) % 52);
-        ctx.fillRect((i * w) / 8 - 12, cityBaseY - bh, bw, bh);
+      ctx.fillStyle = "rgba(41, 128, 154, .36)";
+      const cityBaseY = h - geometry.groundH;
+      for (let i = 0; i < 10; i += 1) {
+        const bw = 34 + ((i * 19) % 26);
+        const bh = 34 + ((i * 23) % 58);
+        ctx.fillRect((i * w) / 9 - 16, cityBaseY - bh, bw, bh);
       }
 
-      // Clouds drift
       const cloudOffset = ((performance.now() / 60) % (w + 220)) - 110;
       ctx.fillStyle = "rgba(255,255,255,.88)";
       drawCloud(ctx, (w - cloudOffset) % w, h * .12, Math.max(18, w * .04));
       drawCloud(ctx, (w - cloudOffset * .6 + 220) % w, h * .22, Math.max(14, w * .03));
       drawCloud(ctx, (w - cloudOffset * .4 + 420) % w, h * .07, Math.max(16, w * .035));
 
-      // Ground tan + grass
       ctx.fillStyle = "#ded895";
-      ctx.fillRect(0, h - groundH, w, groundH);
+      ctx.fillRect(0, h - geometry.groundH, w, geometry.groundH);
       ctx.fillStyle = "#8ec866";
-      ctx.fillRect(0, h - groundH, w, Math.max(10, groundH * .22));
+      ctx.fillRect(0, h - geometry.groundH, w, Math.max(10, geometry.groundH * .22));
       ctx.fillStyle = "#a3d579";
-      ctx.fillRect(0, h - groundH + Math.max(7, groundH * .18), w, 3);
-      // Ground stripes
+      ctx.fillRect(0, h - geometry.groundH + Math.max(7, geometry.groundH * .18), w, 3);
       ctx.fillStyle = "rgba(0,0,0,.06)";
       const stripeOffset = (performance.now() / 18) % 24;
       for (let sx = -stripeOffset; sx < w; sx += 24) {
-        ctx.fillRect(sx, h - groundH + Math.max(14, groundH * .28), 12, 4);
+        ctx.fillRect(sx, h - geometry.groundH + Math.max(14, geometry.groundH * .28), 12, 4);
       }
 
-      // Prompt panel
-      const promptText = game.challenge.entry.meaning;
-      const promptFont = Math.max(14, Math.min(22, w / 22));
-      ctx.font = `900 ${promptFont}px Inter, sans-serif`;
+      drawFlappyPipeWall(ctx, geometry, h);
+      game.challenge.options.forEach((label, lane) => {
+        drawFlappyCoin(ctx, geometry.coinX, geometry.coinYs[lane], geometry.coinR, label);
+      });
+      drawBird(ctx, game.bird.x, game.bird.y, w, game.challenge.entry.meaning);
+    }
+
+    function drawFlappyPipeWall(ctx, geometry, h) {
+      const x = geometry.pipeX;
+      const w = geometry.pipeW;
+      const grad = ctx.createLinearGradient(x, 0, x + w, 0);
+      grad.addColorStop(0, "#4f9e24");
+      grad.addColorStop(.2, "#91de45");
+      grad.addColorStop(.72, "#67bd2c");
+      grad.addColorStop(1, "#2f7d18");
+      const top = geometry.playTop - 20;
+      const bottom = h - geometry.groundH;
+      let cursor = top;
+      for (let lane = 0; lane < 4; lane += 1) {
+        const holeTop = geometry.coinYs[lane] - geometry.holeH / 2;
+        if (holeTop > cursor) drawPipeSegment(ctx, x, cursor, w, holeTop - cursor, grad);
+        const capH = 14;
+        ctx.fillStyle = "#3d8c1d";
+        roundRect(ctx, x - 9, holeTop - capH, w + 18, capH, 5);
+        ctx.fill();
+        roundRect(ctx, x - 9, holeTop + geometry.holeH, w + 18, capH, 5);
+        ctx.fill();
+        ctx.strokeStyle = "rgba(31, 83, 15, .72)";
+        ctx.lineWidth = 2;
+        roundRect(ctx, x - 9, holeTop - capH, w + 18, capH, 5);
+        ctx.stroke();
+        roundRect(ctx, x - 9, holeTop + geometry.holeH, w + 18, capH, 5);
+        ctx.stroke();
+        cursor = holeTop + geometry.holeH;
+      }
+      if (bottom > cursor) drawPipeSegment(ctx, x, cursor, w, bottom - cursor, grad);
+    }
+
+    function drawPipeSegment(ctx, x, y, w, h, fillStyle) {
+      ctx.fillStyle = fillStyle;
+      roundRect(ctx, x, y, w, h, 5);
+      ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,.2)";
+      ctx.fillRect(x + 9, y + 4, Math.max(5, w * .09), Math.max(0, h - 8));
+      ctx.strokeStyle = "rgba(31, 83, 15, .72)";
+      ctx.lineWidth = 2;
+      roundRect(ctx, x, y, w, h, 5);
+      ctx.stroke();
+    }
+
+    function drawFlappyCoin(ctx, x, y, r, label) {
+      const coinText = shortLatinLabel(label);
+      const bob = Math.sin(performance.now() / 180 + (game.flappy?.coinPulse || 0) + y * .03) * 3;
+      y += bob;
+      const grad = ctx.createRadialGradient(x - r * .25, y - r * .35, r * .12, x, y, r);
+      grad.addColorStop(0, "#fff8c8");
+      grad.addColorStop(.45, "#ffd75a");
+      grad.addColorStop(1, "#c98212");
+      ctx.fillStyle = "rgba(0,0,0,.14)";
+      ctx.beginPath();
+      ctx.ellipse(x + 3, y + r * .78, r * .8, r * .18, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#8f5c0f";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(255,255,255,.56)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(x, y, r * .73, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = "#3f2c08";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      const promptMetrics = ctx.measureText(promptText);
-      const boxW = Math.min(w - 30, promptMetrics.width + 36);
-      const boxH = promptFont + 20;
-      ctx.fillStyle = "rgba(23,33,43,.82)";
-      roundRect(ctx, w / 2 - boxW / 2, 18, boxW, boxH, 12);
-      ctx.fill();
-      ctx.fillStyle = "#fff";
-      ctx.fillText(promptText, w / 2, 18 + boxH / 2);
-
-      // Pipe lanes (4 horizontal bands, each is a green Flappy Bird pipe with answer panel)
-      const playArea = h - groundH;
-      const laneH = playArea / 4;
-      const pipeW = Math.min(Math.max(w * .82, 200), w - 12);
-      const x = game.obstacleX;
-      const capW = Math.max(10, w * .03);
-      for (let lane = 0; lane < 4; lane += 1) {
-        const y = lane * laneH + 6;
-        const gateH = laneH - 12;
-        // Pipe body
-        const grad = ctx.createLinearGradient(x, y, x, y + gateH);
-        grad.addColorStop(0, "#83cc3a");
-        grad.addColorStop(.5, "#73bf2e");
-        grad.addColorStop(1, "#5d9c1f");
-        ctx.fillStyle = grad;
-        roundRect(ctx, x, y, pipeW, gateH, 6);
-        ctx.fill();
-        // Inner highlight stripe
-        ctx.fillStyle = "rgba(255,255,255,.18)";
-        ctx.fillRect(x + 6, y + 4, 5, gateH - 8);
-        // Outline
-        ctx.strokeStyle = "#3e7611";
-        ctx.lineWidth = 2;
-        roundRect(ctx, x, y, pipeW, gateH, 6);
-        ctx.stroke();
-        // Cap on left edge (entrance)
-        ctx.fillStyle = "#5d9c1f";
-        roundRect(ctx, x - 2, y - 3, capW, gateH + 6, 4);
-        ctx.fill();
-        ctx.strokeStyle = "#3e7611";
-        roundRect(ctx, x - 2, y - 3, capW, gateH + 6, 4);
-        ctx.stroke();
-        // White panel with answer
-        const panelX = x + capW + 6;
-        const panelW = pipeW - capW - 12;
-        ctx.fillStyle = "rgba(255,255,255,.97)";
-        roundRect(ctx, panelX, y + 8, panelW, gateH - 16, 8);
-        ctx.fill();
-        const optFont = Math.max(12, Math.min(18, w / 22));
-        ctx.fillStyle = "#17212b";
-        ctx.font = `900 ${optFont}px Inter, sans-serif`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        wrapText(ctx, game.challenge.options[lane], panelX + panelW / 2, y + gateH / 2, panelW - 14, optFont + 4, 3);
+      let fontSize = Math.max(15, Math.min(23, r * .63));
+      ctx.font = `900 ${fontSize}px Nunito, sans-serif`;
+      while (fontSize > 10 && ctx.measureText(coinText).width > r * 1.56) {
+        fontSize -= 1;
+        ctx.font = `900 ${fontSize}px Nunito, sans-serif`;
       }
+      wrapText(ctx, coinText, x, y, r * 1.56, Math.max(12, fontSize + 1), 2);
+    }
 
-      drawBird(ctx, game.bird.x, game.bird.y, w);
+    function shortLatinLabel(label) {
+      return String(label || "").split(/[,;/(]/)[0].trim() || String(label || "");
     }
 
     function drawCloud(ctx, x, y, s) {
@@ -3578,8 +3826,27 @@
       return `rgb(${r},${g},${b})`;
     }
 
-    function drawBird(ctx, x, y, w) {
+    function drawBird(ctx, x, y, w, label = "") {
       const s = Math.max(34, Math.min(54, w / 18));
+      if (label) {
+        const labelFont = Math.max(12, Math.min(18, w / 24));
+        ctx.save();
+        ctx.font = `900 ${labelFont}px Nunito, sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        const maxLabelW = Math.min(w * .54, Math.max(128, w - 28));
+        const metrics = ctx.measureText(label);
+        const boxW = Math.min(maxLabelW, Math.max(104, metrics.width + 30));
+        const boxH = labelFont * 2.45;
+        const boxX = Math.max(8, Math.min(w - boxW - 8, x - boxW / 2));
+        const boxY = Math.max(10, y - s - boxH - 12);
+        ctx.fillStyle = "rgba(17, 24, 32, .82)";
+        roundRect(ctx, boxX, boxY, boxW, boxH, 8);
+        ctx.fill();
+        ctx.fillStyle = "#ffffff";
+        wrapText(ctx, label, boxX + boxW / 2, boxY + boxH / 2, boxW - 18, labelFont + 2, 2);
+        ctx.restore();
+      }
       const wingBeat = Math.sin(performance.now() / 90) * .45;
       ctx.save();
       ctx.translate(x, y);
@@ -4126,7 +4393,8 @@
     }
 
     function setupStartChoices() {
-      const free = AVATAR_ITEMS.filter((item) => item.price === 0);
+      syncOwnerInventory();
+      const free = availableAvatarItems().filter((item) => item.price === 0);
       const groups = { face: $("#startFaces"), hat: $("#startHats"), item: $("#startItems") };
       Object.keys(groups).forEach((type) => {
         groups[type].innerHTML = free.filter((item) => item.type === type).map((item) => `<button class="choice ${state.avatar[type] === item.id ? "active" : ""}" data-start-choice="${item.id}" type="button">${item.emoji || "—"}</button>`).join("");
@@ -4232,6 +4500,8 @@
       $("#createClassBtn").addEventListener("click", () => createClass().catch((error) => toast(error?.message || "Class")));
       $("#addStudentBtn").addEventListener("click", () => addStudentToClass().catch((error) => toast(error?.message || "Class")));
       $("#grantCurrencyBtn").addEventListener("click", () => grantCurrency().catch((error) => toast(error?.message || "Grant")));
+      $("#refreshUsersBtn").addEventListener("click", () => refreshRegisteredUsersOnce(true));
+      $$("[data-test-game]").forEach((button) => button.addEventListener("click", () => startTestGame(button.dataset.testGame)));
       $("#ownerWindowClose").addEventListener("click", toggleOwnerFloat);
       $("#createClassTop").addEventListener("click", () => {
         if (!canUseRole("TEACHER")) return;
